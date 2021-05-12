@@ -42,17 +42,14 @@ jobs:
           fi
           
           export WEIGHTS_DIR=$SCRATCH/weights
-          ls -lah $WEIGHTS_DIR
-          
           # avoid unnecessary re-downloading
           if ! [ -d $WEIGHTS_DIR ]; then
             # download the datasets & weights from gdrive
             mkdir $SCRATCH/weights
             mkdir $SCRATCH/data
-            # commenting out because gdrive is temp stopping downloads since they're too high atm
-            # gdown https://drive.google.com/uc?id=13oki4nUEp3z_6Sl4NovhldB90HZ1w1c- -O $SCRATCH/data/linemod_and_occlusion.zip
+            gdown https://drive.google.com/uc?id=13oki4nUEp3z_6Sl4NovhldB90HZ1w1c- -O $SCRATCH/data/linemod_and_occlusion.zip
             # phi=0 model weights ie the smaller one released by ePose
             gdown https://drive.google.com/uc?id=1naMDN16DW6mfz-kQWM_NwSQGTzX-E9t1 -O $SCRATCH/weights/small_occlusion.h5
           fi
           
-          #ls -lah $WEIGHTS_DIR
+          echo 42069
