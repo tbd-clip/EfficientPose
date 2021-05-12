@@ -27,12 +27,18 @@ jobs:
           fi
           python -V 
           conda env list
+          # check that we got an available gpu
+          nvidia-smi
           
           cd $GITHUB_WORKSPACE
-          pip install -r requirements.txt
+          chmod -R 777 $GITHUB_WORKSPACE
+          pip install -r requirements.txt &> /dev/null
           # only install if not already present in the env!
           if ! pip list | grep tensorflow; then
             conda install -y tensorflow-gpu==1.15.0
             python setup.py build_ext --inplace
           fi
           
+          # download the datasets & weights from gdrive
+          gdown https://drive.google.com/uc?id=1VcBLcIBhuT5MmXfE9NMrFdAk2xzF3mP5 -O gdrive_download
+          ls -lah
