@@ -31,6 +31,7 @@ jobs:
           nvidia-smi
           
           cd $GITHUB_WORKSPACE
+          echo $PWD
           chmod -R 777 $GITHUB_WORKSPACE
           pip install -r requirements.txt &> /dev/null
           # only install if not already present in the env!
