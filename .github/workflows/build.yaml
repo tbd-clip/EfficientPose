@@ -34,12 +34,13 @@ jobs:
           cd $GITHUB_WORKSPACE
           echo $PWD
           chmod -R 777 $GITHUB_WORKSPACE
-          pip install -r requirements.txt &> /dev/null
+          
           # only install if not already present in the env!
           if ! pip list | grep tensorflow; then
             conda install -y tensorflow-gpu==1.15.0
-            python setup.py build_ext --inplace
           fi
+          pip install -r requirements.txt &> /dev/null
+          python setup.py build_ext --inplace
           
           export WEIGHTS_DIR=$SCRATCH/weights
           # avoid unnecessary re-downloading
