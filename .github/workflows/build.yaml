@@ -48,8 +48,12 @@ jobs:
             mkdir $SCRATCH/weights
             mkdir $SCRATCH/data
             gdown https://drive.google.com/uc?id=13oki4nUEp3z_6Sl4NovhldB90HZ1w1c- -O $SCRATCH/data/linemod_and_occlusion.zip
+            cd $SCRATCH/data
+            unzip linemod_and_occlusion.zip
+            cd -
             # phi=0 model weights ie the smaller one released by ePose
             gdown https://drive.google.com/uc?id=1naMDN16DW6mfz-kQWM_NwSQGTzX-E9t1 -O $SCRATCH/weights/small_occlusion.h5
           fi
           
-          echo 42069
+          python train.py --phi 0 --epochs 50 occlusion $SCRATCH/data/Linemod_preprocessed/
+
