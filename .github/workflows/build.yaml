@@ -29,7 +29,10 @@ jobs:
           conda env list
           
           cd $GITHUB_WORKSPACE
-          conda install -y tensorflow-gpu==1.15.0
           pip install -r requirements.txt
-          python setup.py build_ext --inplace
+          # only install if not already present in the env!
+          if ! pip list | grep tensorflow; then
+            conda install -y tensorflow-gpu==1.15.0
+            python setup.py build_ext --inplace
+          fi
           
