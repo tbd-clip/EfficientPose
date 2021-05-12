@@ -15,13 +15,14 @@ jobs:
       - name: setup dependencies
         run: |
           . ~/.bashrc
-          conda activate ePose
+          export EPOSE_CONDA=/scratch/$USER/.conda/ePose
+          conda activate $EPOSE_CONDA
           if [ $? -eq 0 ]; then
             :
           else
             echo "creating & activating python env!"
-            conda create --yes python=3.6.8 --prefix /scratch/$USER/.conda/ePose
-            conda activate ePose
+            conda create --yes python=3.6.8 --prefix $EPOSE_CONDA
+            conda activate $EPOSE_CONDA
           fi
           python -V 
           conda env list
