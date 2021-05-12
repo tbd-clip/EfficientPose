@@ -40,7 +40,7 @@ jobs:
           fi
           
           # download the datasets & weights from gdrive
-          gdown https://drive.google.com/uc?id=13oki4nUEp3z_6Sl4NovhldB90HZ1w1c- -O ./data/linemod_and_occlusion.zip
+          gdown https://drive.google.com/uc?id=13oki4nUEp3z_6Sl4NovhldB90HZ1w1c- -O GITHUB_WORKSPACE/data/linemod_and_occlusion.zip
           # phi=0 model weights ie the smaller one released by ePose
-          gdown https://drive.google.com/uc?id=1naMDN16DW6mfz-kQWM_NwSQGTzX-E9t1 -O ./weights/small_occlusion.h5
+          gdown https://drive.google.com/uc?id=1naMDN16DW6mfz-kQWM_NwSQGTzX-E9t1 -O GITHUB_WORKSPACE/weights/small_occlusion.h5
           ls -lah
