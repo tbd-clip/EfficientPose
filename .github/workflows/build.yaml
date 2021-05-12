@@ -1,0 +1,28 @@
+name: Automated Build Script
+
+on:
+  push: 
+    branches: [ main ] 
+
+jobs:
+  build_with_gpu:
+    runs-on: [ pelican02 ]
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup dependencies
+        run: |
+          . ~/.bashrc
+          conda activate ePose
+          if [ $? -eq 0 ]; then
+            :
+          else
+            echo "creating & activating python env!"
+            conda create --yes python=3.6.8 --prefix /scratch/$USER/.conda/ePose
+            conda activate ePose
+          fi
+          python -V 
+          conda env list
+          
