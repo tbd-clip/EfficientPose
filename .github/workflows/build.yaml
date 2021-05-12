@@ -5,7 +5,7 @@ on:
     branches: [ main ] 
 
 jobs:
-  build_with_gpu:
+  build_on_pelican:
     runs-on: [ pelican02 ]
     defaults:
       run:
@@ -15,6 +15,7 @@ jobs:
       - name: setup dependencies
         run: |
           . ~/.bashrc
+          module load gcc
           export EPOSE_CONDA=/scratch/$USER/.conda/ePose
           conda activate $EPOSE_CONDA
           if [ $? -eq 0 ]; then
