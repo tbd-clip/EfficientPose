@@ -41,6 +41,8 @@ jobs:
           fi
           
           export WEIGHTS_DIR=$GITHUB_WORKSPACE/weights
+          ls -lah $WEIGHTS_DIR
+          
           # avoid unnecessary re-downloading
           if ! [ -d $WEIGHTS_DIR ]; then
             # download the datasets & weights from gdrive
@@ -52,4 +54,4 @@ jobs:
             gdown https://drive.google.com/uc?id=1naMDN16DW6mfz-kQWM_NwSQGTzX-E9t1 -O $GITHUB_WORKSPACE/weights/small_occlusion.h5
           fi
           
-          ls -lah $WEIGHTS_DIR
+          #ls -lah $WEIGHTS_DIR
