@@ -7,7 +7,7 @@ We based our work on the Keras EfficientDet implementation [xuannianz/EfficientD
 ## Installation
 
 1) Clone this repository
-2) Create a new environment with ```conda create -n EfficientPose python==3.7```
+2) Create a new environment with ```conda create -n EfficientPose python==3.6```
 3) Activate that environment with ```conda activate EfficientPose```
 4) Install Tensorflow 1.15.0 with ```conda install tensorflow-gpu==1.15.0```
 5) Go to the repo dir and install the other dependencys using ```pip install -r requirements.txt```
