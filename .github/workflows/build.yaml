@@ -2,11 +2,12 @@ name: Automated Build Script
 
 on:
   push: 
-    branches: [ main ] 
+    branches: [ _main ] 
 
 jobs:
   build_on_pelican:
     runs-on: [ pelican02 ]
+    timeout-minutes: 2880 # 48 hrs
     defaults:
       run:
         shell: bash -l {0}
