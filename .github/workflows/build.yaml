@@ -2,12 +2,12 @@ name: Automated Build Script
 
 on:
   push: 
-    branches: [ _main ] 
+    branches: [ main ] 
 
 jobs:
   build_on_pelican:
     runs-on: [ pelican02 ]
-    timeout-minutes: 2880 # 48 hrs
+    timeout-minutes: 4300 # ~72 hrs
     defaults:
       run:
         shell: bash -l {0}
@@ -57,5 +57,5 @@ jobs:
             gdown https://drive.google.com/uc?id=1naMDN16DW6mfz-kQWM_NwSQGTzX-E9t1 -O $SCRATCH/weights/small_occlusion.h5
           fi
           
-          python train.py --phi 0 --epochs 50 occlusion $SCRATCH/data/Linemod_preprocessed/
+          python train.py --phi 0 --epochs 500 occlusion $SCRATCH/data/Linemod_preprocessed/ &> $SCRATCH/ePose_training.log
 
