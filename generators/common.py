@@ -49,7 +49,7 @@ class Generator(keras.utils.Sequence):
             scale_6DoF_augmentation = (0.7, 1.3),
             chance_no_augmentation = 0.02,
             translation_scale_norm = 1000.0,
-            points_for_shape_match_loss = 500,
+            points_for_shape_match_loss = 8, #500,
             batch_size = 1,
             rotation_representation = "axis_angle",
             group_method='random',  # one of 'none', 'random', 'ratio'
@@ -99,10 +99,16 @@ class Generator(keras.utils.Sequence):
         # Shuffle when initializing
         if self.shuffle_groups:
             random.shuffle(self.groups)
-            
-        self.all_3d_model_points_array_for_loss = self.create_all_3d_model_points_array_for_loss(self.class_to_model_3d_points, self.points_for_shape_match_loss)
-        
-        
+
+        #self.all_3d_model_points_array_for_loss = self.create_all_3d_model_points_array_for_loss(self.class_to_model_3d_points, self.points_for_shape_match_loss)
+        # Test idea of replacing accurate 3D rendered model with just points of 3D bounding cube.
+        bcube = self.get_bbox_3d_dict()[0]
+        bcube_np = np.array(bcube, dtype=np.float32)
+        bcube_np = np.expand_dims(bcube_np, axis=0)
+        #print(bcube_np.shape);exit()
+        self.all_3d_model_points_array_for_loss = bcube_np
+
+
     def __getitem__(self, index):
         """
         Keras sequence method for generating the input and annotation batches for EfficientPose.
