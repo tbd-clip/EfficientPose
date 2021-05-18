@@ -105,7 +105,7 @@ class Generator(keras.utils.Sequence):
         # @TODO make it work for multiple point sets (eg occlusion dataset)
         i_s, bcubes = self.get_bbox_3d_dict().items()
         n_classes = len(bcubes)
-        self.all_3d_model_points_array_for_loss = np.zeros((1, n_classes, 3))
+        self.all_3d_model_points_array_for_loss = np.zeros((n_classes, 8, 3))
         for i, bcube in zip(i_s, bcubes):
             bcube_np = np.array(bcube, dtype=np.float32)
             bcube_np = np.expand_dims(bcube_np, axis=0)
