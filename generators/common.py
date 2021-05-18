@@ -110,6 +110,7 @@ class Generator(keras.utils.Sequence):
             bcube_np = np.array(bcube, dtype=np.float32)
             bcube_np = np.expand_dims(bcube_np, axis=0)
             self.all_3d_model_points_array_for_loss[int(i)] = bcube_np
+        print(self.all_3d_model_points_array_for_loss)
 
 
     def __getitem__(self, index):
