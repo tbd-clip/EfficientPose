@@ -102,14 +102,12 @@ class Generator(keras.utils.Sequence):
 
         #self.all_3d_model_points_array_for_loss = self.create_all_3d_model_points_array_for_loss(self.class_to_model_3d_points, self.points_for_shape_match_loss)
         # Test idea of replacing accurate 3D rendered model with just points of 3D bounding cube.
-        # @TODO make it work for multiple point sets (eg occlusion dataset)
         n_classes = len(self.get_bbox_3d_dict().keys())
         self.all_3d_model_points_array_for_loss = np.zeros((n_classes, 8, 3))
         for i, bcube in self.get_bbox_3d_dict().items():
             bcube_np = np.array(bcube, dtype=np.float32)
             bcube_np = np.expand_dims(bcube_np, axis=0)
             self.all_3d_model_points_array_for_loss[int(i)] = bcube_np
-        print(self.all_3d_model_points_array_for_loss)
 
 
     def __getitem__(self, index):
