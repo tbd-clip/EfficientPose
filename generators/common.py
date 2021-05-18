@@ -102,7 +102,7 @@ class Generator(keras.utils.Sequence):
 
         # Test idea of replacing accurate 3D rendered model with just points of 3D bounding cube.
         n_classes = len(self.get_bbox_3d_dict().keys())
-        self.all_3d_model_points_array_for_loss = np.zeros((n_classes, 8, 3))
+        self.all_3d_model_points_array_for_loss = np.zeros((n_classes, 8, 3), dtype=np.float32) 
         for i, bcube in self.get_bbox_3d_dict().items():
             bcube_np = np.array(bcube, dtype=np.float32)
             bcube_np = np.expand_dims(bcube_np, axis=0)
