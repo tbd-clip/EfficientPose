@@ -429,7 +429,7 @@ def build_subnets(num_classes, subnet_width, subnet_depth, subnet_num_iteration_
                                 name = 'translation_net')
     
     
-    scaling_net   = RotationNet(subnet_width,
+    scaling_net   = ScalingNet(subnet_width,
                                 subnet_depth,
                                 num_values = 3,
                                 num_iteration_steps = subnet_num_iteration_steps,
