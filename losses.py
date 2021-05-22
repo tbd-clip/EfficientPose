@@ -169,7 +169,10 @@ def transformation_loss(model_3d_points_np, num_rotation_parameter):
         """
         # separate target and state
         regression_rotation = y_pred[:, :, :num_rotation_parameter]
-        regression_translation = y_pred[:, :, num_rotation_parameter:]
+        s = num_rotation_parameter
+        e = 2 * num_rotation_parameter
+        regression_scaling = y_pred[:, :, s:e]
+        regression_translation = y_pred[:, :, e:]
         regression_target_rotation = y_true[:, :, :num_rotation_parameter]
         regression_target_translation = y_true[:, :, num_rotation_parameter:-3]
         is_symmetric = y_true[:, :, -3]
@@ -179,6 +182,7 @@ def transformation_loss(model_3d_points_np, num_rotation_parameter):
         # filter out "ignore" anchors
         indices           = tf.where(tf.equal(anchor_state, 1))
         regression_rotation = tf.gather_nd(regression_rotation, indices) * math.pi
+        regression_scaling = tf.gather_nd(regression_scaling, indices)
         regression_translation = tf.gather_nd(regression_translation, indices)
         
         regression_target_rotation = tf.gather_nd(regression_target_rotation, indices) * math.pi
@@ -204,7 +208,7 @@ def transformation_loss(model_3d_points_np, num_rotation_parameter):
         regression_translation = tf.expand_dims(regression_translation, axis = 1)
         regression_target_translation = tf.expand_dims(regression_target_translation, axis = 1)
         
-        transformed_points_pred = rotate(selected_model_points, axis_pred, angle_pred) + regression_translation
+        transformed_points_pred = rotate(selected_model_points * regression_scaling, axis_pred, angle_pred) + regression_translation
         transformed_points_target = rotate(selected_model_points, axis_target, angle_target) + regression_target_translation
         
         #distinct between symmetric and asymmetric objects
