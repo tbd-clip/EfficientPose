@@ -446,7 +446,7 @@ def evaluate(
                 max_overlap          = overlaps[0, assigned_annotation]
                 assigned_rotation    = annotations_rotations[assigned_annotation, :3]
                 assigned_translation = annotations_translations[assigned_annotation, :]
-                assigned_scaling     = annotations_scalings[assigned_annotation, :3]
+                #assigned_scaling     = annotations_scalings[assigned_annotation, :3]
 
                 if max_overlap >= iou_threshold and assigned_annotation not in detected_annotations:
                     false_positives = np.append(false_positives, 0)
