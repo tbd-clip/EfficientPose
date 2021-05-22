@@ -108,7 +108,7 @@ def _get_detections(generator, model, score_threshold = 0.05, max_detections = 1
         #     image = image.transpose((2, 0, 1))
 
         # run network
-        boxes, scores, labels, rotations, translations, scalings = model.predict_on_batch([np.expand_dims(image, axis=0), np.expand_dims(camera_input, axis=0)])[:5]
+        boxes, scores, labels, rotations, translations, scalings = model.predict_on_batch([np.expand_dims(image, axis=0), np.expand_dims(camera_input, axis=0)])[:6]
         
         if tf.version.VERSION >= '2.0.0':
             boxes = boxes.numpy()
