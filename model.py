@@ -833,7 +833,7 @@ def apply_subnets_to_feature_maps(box_net, class_net, rotation_net, translation_
     #concat rotation and translation outputs to transformation output to have a single output for transformation loss calculation
     #standard concatenate layer throws error that shapes does not match because translation shape dim 2 is known via translation_anchors and rotation shape dim 2 is None
     #so just use lambda layer with tf concat
-    transformation = layers.Lambda(lambda input_list: tf.concat(input_list, axis = -1), name="transformation")([rotation, translation, scaling])
+    transformation = layers.Lambda(lambda input_list: tf.concat(input_list, axis = -1), name="transformation")([rotation, scaling, translation])
 
     return classification, bbox_regression, rotation, translation, scaling, transformation, bboxes
     
