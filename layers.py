@@ -258,6 +258,7 @@ def filter_detections(
         classification,
         rotation,
         translation,
+        scaling,
         num_rotation_parameters,
         num_translation_parameters = 3,
         class_specific_filter = True,
@@ -361,6 +362,7 @@ def filter_detections(
     labels = keras.backend.gather(labels, top_indices)
     rotation = keras.backend.gather(rotation, indices)
     translation = keras.backend.gather(translation, indices)
+    scaling = keras.backend.gather(scaling, indices)
 
     # zero pad the outputs
     pad_size = keras.backend.maximum(0, max_detections - keras.backend.shape(scores)[0])
@@ -370,6 +372,7 @@ def filter_detections(
     labels = keras.backend.cast(labels, 'int32')
     rotation = tf.pad(rotation, [[0, pad_size], [0, 0]], constant_values=-1)
     translation = tf.pad(translation, [[0, pad_size], [0, 0]], constant_values=-1)
+    scaling = tf.pad(scaling, [[0, pad_size], [0, 0]], constant_values=-1)
 
     # set shapes, since we know what they are
     boxes.set_shape([max_detections, 4])
@@ -377,8 +380,9 @@ def filter_detections(
     labels.set_shape([max_detections])
     rotation.set_shape([max_detections, num_rotation_parameters])
     translation.set_shape([max_detections, num_translation_parameters])
+    scaling.set_shape([max_detections, 3])
 
-    return [boxes, scores, labels, rotation, translation]
+    return [boxes, scores, labels, rotation, translation, scaling]
 
 
 class FilterDetections(keras.layers.Layer):
@@ -461,7 +465,7 @@ class FilterDetections(keras.layers.Layer):
         outputs = tf.map_fn(
             _filter_detections,
             elems=[boxes, classification, rotation, translation, scaling],
-            dtype=['float32', 'float32', 'int32', 'float32', 'float32'],
+            dtype=['float32', 'float32', 'int32', 'float32', 'float32'. 'float32'],
             parallel_iterations=self.parallel_iterations
         )
 
