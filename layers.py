@@ -432,6 +432,7 @@ class FilterDetections(keras.layers.Layer):
         classification = inputs[1]
         rotation = inputs[2]
         translation = inputs[3]
+        scaling = inputs[4]
 
         # wrap nms with our parameters
         def _filter_detections(args):
@@ -439,12 +440,14 @@ class FilterDetections(keras.layers.Layer):
             classification_ = args[1]
             rotation_ = args[2]
             translation_ = args[3]
+            scaling_ = args[4]
 
             return filter_detections(
                 boxes_,
                 classification_,
                 rotation_,
                 translation_,
+                scaling_,
                 self.num_rotation_parameters,
                 self.num_translation_parameters,
                 nms = self.nms,
@@ -457,8 +460,8 @@ class FilterDetections(keras.layers.Layer):
         # call filter_detections on each batch item
         outputs = tf.map_fn(
             _filter_detections,
-            elems=[boxes, classification, rotation, translation],
-            dtype=['float32', 'float32', 'int32', 'float32', 'float32'],
+            elems=[boxes, classification, rotation, translation, scaling],
+            dtype=['float32', 'float32', 'int32', 'float32', 'float32', 'float32'],
             parallel_iterations=self.parallel_iterations
         )
 
