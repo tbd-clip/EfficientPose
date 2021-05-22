@@ -163,7 +163,8 @@ def draw_detections(image, boxes, scores, labels, rotations, translations, scali
         if draw_bbox_2d:
             draw_box(image, boxes[i, :], color = c)
         translation_vector = translations[i, :]
-        scaled_bcubes = class_to_bbox_3D[labels[i]] * scalings
+        scaling_vector = scalings[i, :]
+        scaled_bcubes = class_to_bbox_3D[labels[i]] * scaling_vector
         points_bbox_2D = project_bbox_3D_to_2D(scaled_bcubes, rotations[i, :], translation_vector, camera_matrix, append_centerpoint = True)
         draw_bbox_8_2D(image, points_bbox_2D, color = c)
         if draw_name:
