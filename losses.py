@@ -183,6 +183,7 @@ def transformation_loss(model_3d_points_np, num_rotation_parameter):
         indices           = tf.where(tf.equal(anchor_state, 1))
         regression_rotation = tf.gather_nd(regression_rotation, indices) * math.pi
         regression_scaling = tf.gather_nd(regression_scaling, indices)
+        regression_scaling = tf.expand_dims(regression_scaling, axis = 1)
         regression_translation = tf.gather_nd(regression_translation, indices)
         
         regression_target_rotation = tf.gather_nd(regression_target_rotation, indices) * math.pi
