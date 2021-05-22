@@ -415,7 +415,7 @@ def build_subnets(num_classes, subnet_width, subnet_depth, subnet_num_iteration_
                                 num_iteration_steps = subnet_num_iteration_steps,
                                 num_anchors = num_anchors,
                                 freeze_bn = freeze_bn,
-                                use_group_norm = True,
+                                use_group_norm = False,
                                 num_groups_gn = num_groups_gn,
                                 name = 'rotation_net')
     
@@ -424,7 +424,7 @@ def build_subnets(num_classes, subnet_width, subnet_depth, subnet_num_iteration_
                                 num_iteration_steps = subnet_num_iteration_steps,
                                 num_anchors = num_anchors,
                                 freeze_bn = freeze_bn,
-                                use_group_norm = True,
+                                use_group_norm = False,
                                 num_groups_gn = num_groups_gn,
                                 name = 'translation_net')
     
@@ -435,7 +435,7 @@ def build_subnets(num_classes, subnet_width, subnet_depth, subnet_num_iteration_
                                 num_iteration_steps = subnet_num_iteration_steps,
                                 num_anchors = num_anchors,
                                 freeze_bn = freeze_bn,
-                                use_group_norm = True,
+                                use_group_norm = False,
                                 num_groups_gn = num_groups_gn,
                                 name = 'scaling_net')
 
