@@ -461,7 +461,7 @@ class FilterDetections(keras.layers.Layer):
         outputs = tf.map_fn(
             _filter_detections,
             elems=[boxes, classification, rotation, translation, scaling],
-            dtype=['float32', 'float32', 'int32', 'float32', 'float32', 'float32'],
+            dtype=['float32', 'float32', 'int32', 'float32', 'float32'],
             parallel_iterations=self.parallel_iterations
         )
 
