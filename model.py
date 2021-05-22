@@ -643,6 +643,129 @@ class RotationNet(models.Model):
         outputs = self.reshape(rotation)
         self.level += 1
         return outputs
+
+class IterativeScalingSubNet(models.Model):
+    def __init__(self, width, depth, num_values, num_iteration_steps, num_anchors = 9, freeze_bn = False, use_group_norm = True, num_groups_gn = None, **kwargs):
+        super(IterativeScalingSubNet, self).__init__(**kwargs)
+        self.width = width
+        self.depth = depth
+        self.num_anchors = num_anchors
+        self.num_values = num_values
+        self.num_iteration_steps = num_iteration_steps
+        self.use_group_norm = use_group_norm
+        self.num_groups_gn = num_groups_gn
+        
+        if backend.image_data_format() == 'channels_first':
+            gn_channel_axis = 1
+        else:
+            gn_channel_axis = -1
+            
+        options = {
+            'kernel_size': 3,
+            'strides': 1,
+            'padding': 'same',
+            'bias_initializer': 'zeros',
+        }
+
+        kernel_initializer = {
+            'depthwise_initializer': initializers.VarianceScaling(),
+            'pointwise_initializer': initializers.VarianceScaling(),
+        }
+        options.update(kernel_initializer)
+        self.convs = [layers.SeparableConv2D(filters = width, name = f'{self.name}/iterative-scaling-sub-{i}', **options) for i in range(self.depth)]
+        self.head = layers.SeparableConv2D(filters = self.num_anchors * self.num_values, name = f'{self.name}/iterative-scaling-sub-predict', **options)
+        
+        if self.use_group_norm:
+            self.norm_layer = [[[GroupNormalization(groups = self.num_groups_gn, axis = gn_channel_axis, name = f'{self.name}/iterative-scakubg-sub-{k}-{i}-gn-{j}') for j in range(3, 8)] for i in range(self.depth)] for k in range(self.num_iteration_steps)]
+        else: 
+            self.norm_layer = [[[BatchNormalization(freeze = freeze_bn, momentum = MOMENTUM, epsilon = EPSILON, name = f'{self.name}/iterative-scaling-sub-{k}-{i}-bn-{j}') for j in range(3, 8)] for i in range(self.depth)] for k in range(self.num_iteration_steps)]
+
+        self.activation = layers.Lambda(lambda x: tf.nn.relu(x))
+
+    def call(self, inputs, **kwargs):
+        feature, level = inputs
+        level_py = kwargs["level_py"]
+        iter_step_py = kwargs["iter_step_py"]
+        for i in range(self.depth):
+            feature = self.convs[i](feature)
+            feature = self.norm_layer[iter_step_py][i][level_py](feature)
+            feature = self.activation(feature)
+        outputs = self.head(feature)
+        
+        return outputs
+    
+class ScalingNet(models.Model):
+    def __init__(self, width, depth, num_values, num_iteration_steps, num_anchors = 9, freeze_bn = False, use_group_norm = True, num_groups_gn = None, **kwargs):
+        super(ScalingNet, self).__init__(**kwargs)
+        self.width = width
+        self.depth = depth
+        self.num_anchors = num_anchors
+        self.num_values = num_values
+        self.num_iteration_steps = num_iteration_steps
+        self.use_group_norm = use_group_norm
+        self.num_groups_gn = num_groups_gn
+        
+        if backend.image_data_format() == 'channels_first':
+            channel_axis = 0
+            gn_channel_axis = 1
+        else:
+            channel_axis = -1
+            gn_channel_axis = -1
+            
+        options = {
+            'kernel_size': 3,
+            'strides': 1,
+            'padding': 'same',
+            'bias_initializer': 'zeros',
+        }
+
+        kernel_initializer = {
+            'depthwise_initializer': initializers.VarianceScaling(),
+            'pointwise_initializer': initializers.VarianceScaling(),
+        }
+        options.update(kernel_initializer)
+        self.convs = [layers.SeparableConv2D(filters = self.width, name = f'{self.name}/scaling-{i}', **options) for i in range(self.depth)]
+        self.initial_scaling = layers.SeparableConv2D(filters = self.num_anchors * self.num_values, name = f'{self.name}/scaling-init-predict', **options)
+    
+        if self.use_group_norm:
+            self.norm_layer = [[GroupNormalization(groups = self.num_groups_gn, axis = gn_channel_axis, name = f'{self.name}/scaling-{i}-gn-{j}') for j in range(3, 8)] for i in range(self.depth)]
+        else: 
+            self.norm_layer = [[BatchNormalization(freeze = freeze_bn, momentum = MOMENTUM, epsilon = EPSILON, name = f'{self.name}/scaling-{i}-bn-{j}') for j in range(3, 8)] for i in range(self.depth)]
+        
+        self.iterative_submodel = IterativeScalingSubNet(width = self.width,
+                                                          depth = self.depth - 1,
+                                                          num_values = self.num_values,
+                                                          num_iteration_steps = self.num_iteration_steps,
+                                                          num_anchors = self.num_anchors,
+                                                          freeze_bn = freeze_bn,
+                                                          use_group_norm = self.use_group_norm,
+                                                          num_groups_gn = self.num_groups_gn,
+                                                          name = "iterative_scaling_subnet")
+
+        # @TODO mention like the only change to the RotationNet arch
+        self.activation = layers.Lambda(lambda x: tf.nn.relu(x))
+        self.reshape = layers.Reshape((-1, num_values))
+        self.level = 0
+        self.add = layers.Add()
+        self.concat = layers.Concatenate(axis = channel_axis)
+
+    def call(self, inputs, **kwargs):
+        feature, level = inputs
+        for i in range(self.depth):
+            feature = self.convs[i](feature)
+            feature = self.norm_layer[i][self.level](feature)
+            feature = self.activation(feature)
+            
+        scaling = self.initial_scaling(feature)
+        
+        for i in range(self.num_iteration_steps):
+            iterative_input = self.concat([feature, scaling])
+            delta_scaling = self.iterative_submodel([iterative_input, level], level_py = self.level, iter_step_py = i)
+            scaling = self.add([scaling, delta_scaling])
+        
+        outputs = self.reshape(scaling)
+        self.level += 1
+        return outputs
     
     
 class IterativeTranslationSubNet(models.Model):
