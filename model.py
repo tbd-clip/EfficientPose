@@ -106,7 +106,7 @@ def build_EfficientPose(phi,
     fpn_feature_maps = build_BiFPN(backbone_feature_maps, bifpn_depth, bifpn_width, freeze_bn)
     
     #build subnets
-    box_net, class_net, rotation_net, translation_net = build_subnets(num_classes,
+    box_net, class_net, rotation_net, translation_net, scaling_net = build_subnets(num_classes,
                                                                       subnet_width,
                                                                       subnet_depth,
                                                                       subnet_num_iteration_steps,
@@ -116,10 +116,11 @@ def build_EfficientPose(phi,
                                                                       num_anchors)
     
     #apply subnets to feature maps
-    classification, bbox_regression, rotation, translation, transformation, bboxes = apply_subnets_to_feature_maps(box_net,
+    classification, bbox_regression, rotation, translation, scaling, transformation, bboxes = apply_subnets_to_feature_maps(box_net,
                                                                                                                    class_net,
                                                                                                                    rotation_net,
                                                                                                                    translation_net,
+                                                                                                                   scaling_net,
                                                                                                                    fpn_feature_maps,
                                                                                                                    image_input,
                                                                                                                    camera_parameters_input,
@@ -135,7 +136,7 @@ def build_EfficientPose(phi,
                                            num_translation_parameters = 3,
                                            name = 'filtered_detections',
                                            score_threshold = score_threshold
-                                           )([bboxes, classification, rotation, translation])
+                                           )([bboxes, classification, rotation, translation, scaling])
 
     efficientpose_prediction = models.Model(inputs = [image_input, camera_parameters_input], outputs = filtered_detections, name = 'efficientpose_prediction')
     
@@ -426,8 +427,19 @@ def build_subnets(num_classes, subnet_width, subnet_depth, subnet_num_iteration_
                                 use_group_norm = True,
                                 num_groups_gn = num_groups_gn,
                                 name = 'translation_net')
+    
+    
+    scaling_net   = RotationNet(subnet_width,
+                                subnet_depth,
+                                num_values = 3,
+                                num_iteration_steps = subnet_num_iteration_steps,
+                                num_anchors = num_anchors,
+                                freeze_bn = freeze_bn,
+                                use_group_norm = True,
+                                num_groups_gn = num_groups_gn,
+                                name = 'scaling_net')
 
-    return box_net, class_net, rotation_net, translation_net     
+    return box_net, class_net, rotation_net, translation_net, scaling_net  
 
 
 class BoxNet(models.Model):
@@ -766,7 +778,7 @@ class TranslationNet(models.Model):
         return outputs
     
 
-def apply_subnets_to_feature_maps(box_net, class_net, rotation_net, translation_net, fpn_feature_maps, image_input, camera_parameters_input, input_size, anchor_parameters):
+def apply_subnets_to_feature_maps(box_net, class_net, rotation_net, translation_net, scaling_net, fpn_feature_maps, image_input, camera_parameters_input, input_size, anchor_parameters):
     """
     Applies the subnetworks to the BiFPN feature maps
     Args:
@@ -797,6 +809,9 @@ def apply_subnets_to_feature_maps(box_net, class_net, rotation_net, translation_
     translation_raw = [translation_net([feature, i]) for i, feature in enumerate(fpn_feature_maps)]
     translation_raw = layers.Concatenate(axis = 1, name='translation_raw_outputs')(translation_raw)
     
+    scaling = [scaling_net([feature, i]) for i, feature in enumerate(fpn_feature_maps)]
+    scaling = layers.Concatenate(axis = 1, name='scaling')(scaling)
+    
     #get anchors and apply predicted translation offsets to translation anchors
     anchors, translation_anchors = anchors_for_shape((input_size, input_size), anchor_params = anchor_parameters)
     translation_anchors_input = np.expand_dims(translation_anchors, axis = 0)
@@ -818,9 +833,9 @@ def apply_subnets_to_feature_maps(box_net, class_net, rotation_net, translation_
     #concat rotation and translation outputs to transformation output to have a single output for transformation loss calculation
     #standard concatenate layer throws error that shapes does not match because translation shape dim 2 is known via translation_anchors and rotation shape dim 2 is None
     #so just use lambda layer with tf concat
-    transformation = layers.Lambda(lambda input_list: tf.concat(input_list, axis = -1), name="transformation")([rotation, translation])
+    transformation = layers.Lambda(lambda input_list: tf.concat(input_list, axis = -1), name="transformation")([rotation, translation, scaling])
 
-    return classification, bbox_regression, rotation, translation, transformation, bboxes
+    return classification, bbox_regression, rotation, translation, scaling, transformation, bboxes
     
 
 def print_models(*models):
