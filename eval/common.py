@@ -108,7 +108,7 @@ def _get_detections(generator, model, score_threshold = 0.05, max_detections = 1
         #     image = image.transpose((2, 0, 1))
 
         # run network
-        boxes, scores, labels, rotations, translations = model.predict_on_batch([np.expand_dims(image, axis=0), np.expand_dims(camera_input, axis=0)])[:5]
+        boxes, scores, labels, rotations, translations, scalings = model.predict_on_batch([np.expand_dims(image, axis=0), np.expand_dims(camera_input, axis=0)])[:6]
         
         if tf.version.VERSION >= '2.0.0':
             boxes = boxes.numpy()
@@ -116,6 +116,7 @@ def _get_detections(generator, model, score_threshold = 0.05, max_detections = 1
             labels = labels.numpy()
             rotations = rotations.numpy()
             translations = translations.numpy()
+            scalings = scalings.numpy()
 
         # correct boxes for image scale
         boxes /= scale
@@ -137,6 +138,7 @@ def _get_detections(generator, model, score_threshold = 0.05, max_detections = 1
         image_boxes      = boxes[0, indices[scores_sort], :]
         image_rotations  = rotations[0, indices[scores_sort], :]
         image_translations = translations[0, indices[scores_sort], :]
+        image_scalings   = scalings[0, indices[scores_sort], :]
         image_scores     = scores[scores_sort]
         image_labels     = labels[0, indices[scores_sort]]
         image_detections = np.concatenate([image_boxes, np.expand_dims(image_scores, axis=1), np.expand_dims(image_labels, axis=1)], axis=1)
@@ -144,7 +146,7 @@ def _get_detections(generator, model, score_threshold = 0.05, max_detections = 1
         if save_path is not None:
             raw_image = cv2.cvtColor(raw_image, cv2.COLOR_RGB2BGR)
             draw_annotations(raw_image, generator.load_annotations(i), class_to_bbox_3D = generator.get_bbox_3d_dict(), camera_matrix = generator.load_camera_matrix(i), label_to_name=generator.label_to_name)
-            draw_detections(raw_image, image_boxes, image_scores, image_labels, image_rotations, image_translations, class_to_bbox_3D = generator.get_bbox_3d_dict(), camera_matrix = generator.load_camera_matrix(i), label_to_name=generator.label_to_name)
+            draw_detections(raw_image, image_boxes, image_scores, image_labels, image_rotations, image_translations, image_scalings, class_to_bbox_3D = generator.get_bbox_3d_dict(), camera_matrix = generator.load_camera_matrix(i), label_to_name=generator.label_to_name)
 
             cv2.imwrite(os.path.join(save_path, '{}.png'.format(i)), raw_image)
 
@@ -153,7 +155,7 @@ def _get_detections(generator, model, score_threshold = 0.05, max_detections = 1
             if not generator.has_label(label):
                 continue
 
-            all_detections[i][label] = (image_detections[image_detections[:, -1] == label, :-1], image_rotations[image_detections[:, -1] == label, :], image_translations[image_detections[:, -1] == label, :])
+            all_detections[i][label] = (image_detections[image_detections[:, -1] == label, :-1], image_rotations[image_detections[:, -1] == label, :], image_translations[image_detections[:, -1] == label, :], image_scalings[image_detections[:, -1] == label, :])
 
     return all_detections
 
@@ -185,7 +187,7 @@ def _get_annotations(generator):
     return all_annotations
 
 
-def check_6d_pose_2d_reprojection(model_3d_points, rotation_gt, translation_gt, rotation_pred, translation_pred, camera_matrix, pixel_threshold = 5.0):
+def check_6d_pose_2d_reprojection(model_3d_points, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, camera_matrix, pixel_threshold = 5.0):
     """ Check if the predicted 6D pose of a single example is considered to be correct using the 2D reprojection metric
 
     # Arguments
@@ -201,7 +203,7 @@ def check_6d_pose_2d_reprojection(model_3d_points, rotation_gt, translation_gt, 
     """
     #transform points into camera coordinate system with gt and prediction transformation parameters respectively
     transformed_points_gt = np.dot(model_3d_points, rotation_gt.T) + translation_gt
-    transformed_points_pred = np.dot(model_3d_points, rotation_pred.T) + translation_pred
+    transformed_points_pred = np.dot(model_3d_points * scaling_pred, rotation_pred.T) + translation_pred
     
     #project the points on the 2d image plane
     points_2D_gt, _ = np.squeeze(cv2.projectPoints(transformed_points_gt, np.zeros((3,)), np.zeros((3,)), camera_matrix, None))
@@ -218,7 +220,7 @@ def check_6d_pose_2d_reprojection(model_3d_points, rotation_gt, translation_gt, 
     return is_correct
 
 
-def check_6d_pose_add(model_3d_points, model_3d_diameter, rotation_gt, translation_gt, rotation_pred, translation_pred, diameter_threshold = 0.1):
+def check_6d_pose_add(model_3d_points, model_3d_diameter, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, diameter_threshold = 0.1):
     """ Check if the predicted 6D pose of a single example is considered to be correct using the ADD metric
 
     # Arguments
@@ -235,7 +237,7 @@ def check_6d_pose_add(model_3d_points, model_3d_diameter, rotation_gt, translati
         transformed_points_gt: numpy array with shape (num_3D_points, 3) containing the object's 3D points transformed with the ground truth 6D pose
     """
     transformed_points_gt = np.dot(model_3d_points, rotation_gt.T) + translation_gt
-    transformed_points_pred = np.dot(model_3d_points, rotation_pred.T) + translation_pred
+    transformed_points_pred = np.dot(model_3d_points* scaling_pred, rotation_pred.T) + translation_pred
 
     distances = np.linalg.norm(transformed_points_gt - transformed_points_pred, axis = -1)
     mean_distances = np.mean(distances)
@@ -248,7 +250,7 @@ def check_6d_pose_add(model_3d_points, model_3d_diameter, rotation_gt, translati
     return is_correct, mean_distances, transformed_points_gt
 
 
-def check_6d_pose_add_s(model_3d_points, model_3d_diameter, rotation_gt, translation_gt, rotation_pred, translation_pred, diameter_threshold = 0.1, max_points = 1000):    
+def check_6d_pose_add_s(model_3d_points, model_3d_diameter, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, diameter_threshold = 0.1, max_points = 1000):    
     """ Check if the predicted 6D pose of a single example is considered to be correct using the ADD-S metric
 
     # Arguments
@@ -265,7 +267,7 @@ def check_6d_pose_add_s(model_3d_points, model_3d_diameter, rotation_gt, transla
         mean_distances: The average distance between the object's 3D points transformed with the predicted and ground truth 6D pose respectively
     """
     transformed_points_gt = np.dot(model_3d_points, rotation_gt.T) + translation_gt
-    transformed_points_pred = np.dot(model_3d_points, rotation_pred.T) + translation_pred
+    transformed_points_pred = np.dot(model_3d_points * scaling_pred, rotation_pred.T) + translation_pred
     #calc all distances between all point pairs and get the minimum distance for every point
     num_points = transformed_points_gt.shape[0]
     
@@ -316,7 +318,7 @@ def calc_rotation_diff(rotation_gt, rotation_pred):
     return abs(angular_distance)
 
 
-def check_6d_pose_5cm_5degree(rotation_gt, translation_gt, rotation_pred, translation_pred):
+def check_6d_pose_5cm_5degree(rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred):
     """ Check if the predicted 6D pose of a single example is considered to be correct using the 5cm 5 degree metric
         copied and modified from https://github.com/ethnhe/PVN3D/blob/master/pvn3d/lib/utils/evaluation_utils.py def cm_degree_5_metric(self, pose_pred, pose_targets):
     # Arguments
@@ -424,13 +426,14 @@ def evaluate(
             detections           = all_detections[i][label][0]
             detections_rotations = all_detections[i][label][1]
             detections_translations = all_detections[i][label][2]
+            detections_scalings = all_detections[i][label][3]
             annotations          = all_annotations[i][label][0]
             annotations_rotations = all_annotations[i][label][1]
             annotations_translations = all_annotations[i][label][2]
             num_annotations     += annotations.shape[0]
             detected_annotations = []
 
-            for d, d_rotation, d_translation in zip(detections, detections_rotations, detections_translations):
+            for d, d_rotation, d_translation, d_scaling in zip(detections, detections_rotations, detections_translations, detections_scalings):
                 scores = np.append(scores, d[4])
 
                 if annotations.shape[0] == 0:
@@ -438,11 +441,12 @@ def evaluate(
                     true_positives  = np.append(true_positives, 0)
                     continue
 
-                overlaps            = compute_overlap(np.expand_dims(d, axis=0), annotations)
-                assigned_annotation = np.argmax(overlaps, axis=1)
-                max_overlap         = overlaps[0, assigned_annotation]
-                assigned_rotation = annotations_rotations[assigned_annotation, :3]
+                overlaps             = compute_overlap(np.expand_dims(d, axis=0), annotations)
+                assigned_annotation  = np.argmax(overlaps, axis=1)
+                max_overlap          = overlaps[0, assigned_annotation]
+                assigned_rotation    = annotations_rotations[assigned_annotation, :3]
                 assigned_translation = annotations_translations[assigned_annotation, :]
+                #assigned_scaling     = annotations_scalings[assigned_annotation, :3]
 
                 if max_overlap >= iou_threshold and assigned_annotation not in detected_annotations:
                     false_positives = np.append(false_positives, 0)
@@ -455,6 +459,7 @@ def evaluate(
                                                                                                         translation_gt = np.squeeze(assigned_translation),
                                                                                                         rotation_pred = generator.axis_angle_to_rotation_mat(d_rotation),
                                                                                                         translation_pred = d_translation,
+                                                                                                        scaling_pred = d_scaling,
                                                                                                         diameter_threshold = diameter_threshold)
                     
                     is_correct_6d_pose_add_s, mean_distances_add_s = check_6d_pose_add_s(model_3d_points,
@@ -463,18 +468,21 @@ def evaluate(
                                                                                        translation_gt = np.squeeze(assigned_translation),
                                                                                        rotation_pred = generator.axis_angle_to_rotation_mat(d_rotation),
                                                                                        translation_pred = d_translation,
+                                                                                       scaling_pred = d_scaling,
                                                                                        diameter_threshold = diameter_threshold)
                     
                     is_correct_6d_pose_5cm_5degree, translation_distance, rotation_distance = check_6d_pose_5cm_5degree(rotation_gt = generator.axis_angle_to_rotation_mat(assigned_rotation),
                                                                                                                          translation_gt = np.squeeze(assigned_translation),
                                                                                                                          rotation_pred = generator.axis_angle_to_rotation_mat(d_rotation),
-                                                                                                                         translation_pred = d_translation)
+                                                                                                                         translation_pred = d_translation,
+                                                                                                                         scaling_pred = d_scaling)
                     
                     is_correct_2d_projection = check_6d_pose_2d_reprojection(model_3d_points,
                                                                              rotation_gt = generator.axis_angle_to_rotation_mat(assigned_rotation),
                                                                              translation_gt = np.squeeze(assigned_translation),
                                                                              rotation_pred = generator.axis_angle_to_rotation_mat(d_rotation),
                                                                              translation_pred = d_translation,
+                                                                             scaling_pred = d_scaling,
                                                                              camera_matrix = generator.load_camera_matrix(i),
                                                                              pixel_threshold = 5.0)
                     
