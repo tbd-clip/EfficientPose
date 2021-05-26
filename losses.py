@@ -80,7 +80,7 @@ def focal(alpha=0.25, gamma=1.5):
         indices = tf.where(keras.backend.equal(label_sums, 1))
         # @TODO remove and add general solution for nuscenes training
         #labels = labels[indices, :].assign(tf.constant([1, 0, 0, 0, 0, 0, 0, 0]))
-        labels = labels[indices].assign(tf.constant([1, 0, 0, 0, 0, 0, 0, 0]))
+        labels[indices].assign(tf.constant([1, 0, 0, 0, 0, 0, 0, 0]))
         #single_class_labels = tf.zeros_like(labels)
         #.assign(tf.zeros(4))
         #labels = tf.Print(label_sums, [tf.shape(label_sums)], message=" label_sums.shape: ", summarize=-1)
