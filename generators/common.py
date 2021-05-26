@@ -112,7 +112,7 @@ class Generator(keras.utils.Sequence):
         # @TODO modify and use for nuscenes training
         # take the avg of self.all_3d_model_points for proof of concept.
         avg_bcube = np.mean(self.all_3d_model_points_array_for_loss, axis=0)
-        assert avg_bcube.shape == (), "oh nein"
+        assert avg_bcube.shape == (1, 8, 3), "oh nein"
         for i in range(n_classes):
             self.all_bcube_priors_for_loss[i] = avg_bcube 
 
