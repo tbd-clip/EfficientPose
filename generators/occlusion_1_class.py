@@ -607,7 +607,8 @@ class OcclusionGenerator(Generator):
     def num_classes(self):
         """ Number of classes in the dataset.
         """
-        return len(self.class_to_name)
+        # arch can only guess 1 class
+        return 1
 
     def has_label(self, label):
         """ Returns True if label is a known label.
