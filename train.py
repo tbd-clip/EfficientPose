@@ -163,6 +163,7 @@ def main(args = None):
                   loss={'regression': smooth_l1(),
                         'classification': focal(),
                         'transformation': transformation_loss(model_3d_points_np = train_generator.get_all_3d_model_points_array_for_loss(),
+                                                              bcube_priors_np = train_generator.get_all_bcube_priors_for_loss(),
                                                               num_rotation_parameter = num_rotation_parameters)},
                   loss_weights = {'regression' : 1.0,
                                   'classification': 1.0,
