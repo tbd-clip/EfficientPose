@@ -68,7 +68,8 @@ def focal(alpha=0.25, gamma=1.5):
             The focal loss of y_pred w.r.t. y_true.
         """
         labels = y_true[:, :, :-1]
-        labels = tf.Print(labels, [labels], message="This is the labels: ", summarize=-1)
+        #labels = tf.Print(labels, [labels], message="This is the labels: ", summarize=-1)
+        print(tf.shape(labels))
         # -1 for ignore, 0 for background, 1 for object
         anchor_state = y_true[:, :, -1]
         classification = y_pred
