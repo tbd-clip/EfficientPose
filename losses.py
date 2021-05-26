@@ -77,7 +77,7 @@ def focal(alpha=0.25, gamma=1.5):
         indices = tf.where(keras.backend.not_equal(anchor_state, -1))
         labels = tf.gather_nd(labels, indices)
         label_sums = tf.math.reduce_sum(labels, axis=0)
-        label_sums = tf.Print(label_sums, [tf.shape(label_sums)], message=" label_sums.shape: ", summarize=-1)
+        labels = tf.Print(label_sums, [tf.shape(label_sums)], message=" label_sums.shape: ", summarize=-1)
         classification = tf.gather_nd(classification, indices)
 
         # compute the focal loss
