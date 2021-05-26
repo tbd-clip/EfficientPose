@@ -142,7 +142,7 @@ def smooth_l1(sigma=3.0):
     return _smooth_l1
 
 
-def transformation_loss(model_3d_points_np, num_rotation_parameter):
+def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parameter):
     """
     Create a transformation loss functor as described in https://arxiv.org/abs/2011.04307
     Args:
@@ -153,6 +153,7 @@ def transformation_loss(model_3d_points_np, num_rotation_parameter):
         A functor for computing the transformation loss given target data and predicted data.
     """
     model_3d_points = tf.convert_to_tensor(value = model_3d_points_np)
+    bcube_priors_tensor = tf.convert_to_tensor(value = bcube_priors_np)
     num_points = tf.shape(model_3d_points)[1]    
     
     def _transformation_loss(y_true, y_pred):
@@ -199,6 +200,7 @@ def transformation_loss(model_3d_points_np, num_rotation_parameter):
         #rotate the 3d model points with target and predicted rotations        
         #select model points according to the class indices
         selected_model_points = tf.gather(model_3d_points, class_indices, axis = 0)
+        bcube_prior_points = tf.gather(bcube_priors_tensor, class_indices, axis = 0)
         #expand dims of the rotation tensors to rotate all points along the dimension via broadcasting
         axis_pred = tf.expand_dims(axis_pred, axis = 1)
         angle_pred = tf.expand_dims(angle_pred, axis = 1)
@@ -209,7 +211,7 @@ def transformation_loss(model_3d_points_np, num_rotation_parameter):
         regression_translation = tf.expand_dims(regression_translation, axis = 1)
         regression_target_translation = tf.expand_dims(regression_target_translation, axis = 1)
         
-        transformed_points_pred = rotate(selected_model_points * regression_scaling, axis_pred, angle_pred) + regression_translation
+        transformed_points_pred = rotate(bcube_prior_points * regression_scaling, axis_pred, angle_pred) + regression_translation
         transformed_points_target = rotate(selected_model_points, axis_target, angle_target) + regression_target_translation
         
         #distinct between symmetric and asymmetric objects
