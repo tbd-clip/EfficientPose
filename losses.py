@@ -69,7 +69,6 @@ def focal(alpha=0.25, gamma=1.5):
         """
         labels = y_true[:, :, :-1]
         #labels = tf.Print(labels, [labels], message="This is the labels: ", summarize=-1)
-        labels = tf.Print(labels, [tf.shape(labels)], message="This is the labels: ", summarize=-1)
         # -1 for ignore, 0 for background, 1 for object
         anchor_state = y_true[:, :, -1]
         classification = y_pred
@@ -77,6 +76,7 @@ def focal(alpha=0.25, gamma=1.5):
         # filter out "ignore" anchors
         indices = tf.where(keras.backend.not_equal(anchor_state, -1))
         labels = tf.gather_nd(labels, indices)
+        labels = tf.Print(labels, [tf.shape(labels)], message=" labels.shape: ", summarize=-1)
         classification = tf.gather_nd(classification, indices)
 
         # compute the focal loss
