@@ -107,7 +107,15 @@ class Generator(keras.utils.Sequence):
             bcube_np = np.array(bcube, dtype=np.float32)
             bcube_np = np.expand_dims(bcube_np, axis=0)
             self.all_3d_model_points_array_for_loss[int(i)] = bcube_np
-
+        
+        self.all_bcube_priors_for_loss = np.zeros((n_classes, 8, 3), dtype=np.float32) 
+        
+        # @TODO modify and use for nuscenes training
+        # take the avg of self.all_3d_model_points for proof of concept.
+        avg_bcube = np.mean(self.all_3d_model_points_array, axis=0)
+        assert avg_bcube.shape == (), "oh nein"
+        for i in range(n_classes):
+            self.all_bcube_priors_for_loss[i] = avg_bcube 
 
     def __getitem__(self, index):
         """
@@ -653,13 +661,17 @@ class Generator(keras.utils.Sequence):
         """
         return self.translation_scale_norm
     
-    
     def get_all_3d_model_points_array_for_loss(self):
         """
         Returns the numpy array with shape (num_classes, num_3D_points, 3) containing the 3D model points for every object in the dataset
         """
         return self.all_3d_model_points_array_for_loss
     
+    def get_all_bcube_priors_for_loss(self):
+        """
+        See get_all_3d_model_points_array_for_loss() above. Similar but returns 3d points of yet scaled bounding cube priors.
+        """
+        return self.all_bcube_priors_for_loss
         
     def create_all_3d_model_points_array_for_loss(self, class_to_model_3d_points, num_model_points):
         """
