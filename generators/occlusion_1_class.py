@@ -36,7 +36,7 @@ from generators.common import Generator
 
 
 #Generator for the Occlusion Dataset (Linemod because Occlusion is a subset of linemod) downloaded from here: https://github.com/j96w/DenseFusion and the valid poses from here https://github.com/chensong1995/HybridPose
-class OcclusionGenerator(Generator):
+class OcclusionGenerator1(Generator):
     """
     Generator for the Occlusion dataset
 
@@ -664,8 +664,8 @@ class OcclusionGenerator(Generator):
 
 if __name__ == "__main__":
     #test linemod generator
-    train_gen = OcclusionGenerator("/Datasets/Linemod_preprocessed/", use_6DoF_augmentation = True, use_colorspace_augmentation = True)
-    #test_gen = OcclusionGenerator("/Datasets/Linemod_preprocessed/", train = False, shuffle_dataset = False, shuffle_groups = False)
+    train_gen = OcclusionGenerator1("/Datasets/Linemod_preprocessed/", use_6DoF_augmentation = True, use_colorspace_augmentation = True)
+    #test_gen = OcclusionGenerator1("/Datasets/Linemod_preprocessed/", train = False, shuffle_dataset = False, shuffle_groups = False)
     
     for i in range(100):
         img, anno = train_gen[0]
