@@ -96,7 +96,7 @@ def _get_detections(generator, model, score_threshold = 0.05, max_detections = 1
         A list of lists containing the detections for each image in the generator.
     """
     all_detections = [[None for i in range(generator.num_classes()) if generator.has_label(i)] for j in range(generator.size())]
-
+    
     for i in progressbar.progressbar(range(generator.size()), prefix='Running network: '):
         raw_image    = generator.load_image(i)
         image, scale = generator.preprocess_image(raw_image.copy())
@@ -146,7 +146,8 @@ def _get_detections(generator, model, score_threshold = 0.05, max_detections = 1
         if save_path is not None:
             raw_image = cv2.cvtColor(raw_image, cv2.COLOR_RGB2BGR)
             draw_annotations(raw_image, generator.load_annotations(i), class_to_bbox_3D = generator.get_bbox_3d_dict(), camera_matrix = generator.load_camera_matrix(i), label_to_name=generator.label_to_name)
-            draw_detections(raw_image, image_boxes, image_scores, image_labels, image_rotations, image_translations, image_scalings, class_to_bbox_3D = generator.get_bbox_3d_dict(), camera_matrix = generator.load_camera_matrix(i), label_to_name=generator.label_to_name)
+            # @TODO make more general for the nuscenes training!
+            draw_detections(raw_image, image_boxes, image_scores, image_labels, image_rotations, image_translations, image_scalings, bcube_prior = generator.get_bcube_prior(), camera_matrix = generator.load_camera_matrix(i), label_to_name=generator.label_to_name)
 
             cv2.imwrite(os.path.join(save_path, '{}.png'.format(i)), raw_image)
 
