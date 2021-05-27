@@ -139,7 +139,7 @@ def anchor_targets_bbox(
             transformation_batch[index, positive_indices, -1] = 1
 
             # compute target class labels
-            print(annotations['labels'][argmax_overlaps_inds[positive_indices], "LOL")
+            print(annotations['labels'][argmax_overlaps_inds[positive_indices]], "LOL")
             labels_batch[index, positive_indices, annotations['labels'][argmax_overlaps_inds[positive_indices]].astype(int)] = 1
 
             regression_batch[index, :, :4] = bbox_transform(anchors, annotations['bboxes'][argmax_overlaps_inds, :])
