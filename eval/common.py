@@ -388,7 +388,9 @@ def evaluate(
     # gather all detections and annotations
     all_detections     = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
     all_annotations    = _get_annotations(generator)
-    all_3d_models      = generator.get_models_3d_points_dict()
+    all_3d_models      = generator.get_all_3d_model_points_array_for_loss()
+    #all_3d_models      = generator.get_models_3d_points_dict()
+    # @TODO will need to calc a diff way for nuscenes!
     all_3d_model_diameters = generator.get_objects_diameter_dict()
     bcube_prior = generator.get_bcube_prior()
     average_precisions = {}
