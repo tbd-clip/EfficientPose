@@ -137,7 +137,7 @@ def project_bbox_3D_to_2D(points_bbox_3D, rotation_vector, translation_vector, c
     
 
 
-def draw_detections(image, boxes, scores, labels, rotations, translations, scalings, class_to_bbox_3D, camera_matrix, color = None, label_to_name = None, score_threshold = 0.5, draw_bbox_2d = False, draw_name = False):
+def draw_detections(image, boxes, scores, labels, rotations, translations, scalings, bcube_prior, camera_matrix, color = None, label_to_name = None, score_threshold = 0.5, draw_bbox_2d = False, draw_name = False):
     """ Draws detections in an image.
 
     # Arguments
@@ -164,7 +164,7 @@ def draw_detections(image, boxes, scores, labels, rotations, translations, scali
             draw_box(image, boxes[i, :], color = c)
         translation_vector = translations[i, :]
         scaling_vector = scalings[i, :]
-        scaled_bcubes = class_to_bbox_3D[labels[i]] * scaling_vector
+        scaled_bcubes = bcube_prior * scaling_vector
         points_bbox_2D = project_bbox_3D_to_2D(scaled_bcubes, rotations[i, :], translation_vector, camera_matrix, append_centerpoint = True)
         draw_bbox_8_2D(image, points_bbox_2D, color = c)
         if draw_name:
