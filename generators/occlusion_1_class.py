@@ -508,8 +508,9 @@ class OcclusionGenerator1(Generator):
                 #fill in the values
                 #get the class label for the occlusion object id
                 annotations["labels"][i] = self.object_ids_to_class_labels[gt["obj_id"]]
-                print(annotations["labels"][i])
-                annotations["single_class_labels"][i] = self.object_ids_to_class_labels[1]
+                #print(annotations["labels"][i])
+                # @TODO remove for anything outside 1 class mapping test on occlusion dataset!
+                annotations["single_class_labels"][i] = 0.
                 #get bbox from mask
                 annotations["bboxes"][i, :], found_object = self.get_bbox_from_mask(mask, mask_value = self.name_to_mask_value[self.class_to_name[self.object_ids_to_class_labels[gt["obj_id"]]]])
                 if not found_object:
