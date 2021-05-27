@@ -250,6 +250,17 @@ def create_callbacks(training_model, prediction_model, validation_generator, arg
             
         metric_to_monitor = "ADD(-S)"
         mode = "max"
+    elif args.dataset_type == "occlusion1":
+        snapshot_path = os.path.join(args.snapshot_path, "occlusion1")
+        if args.validation_image_save_path:
+            save_path = os.path.join(args.validation_image_save_path, "occlusion1")
+        else:
+            save_path = args.validation_image_save_path
+        if args.tensorboard_dir:
+            tensorboard_dir = os.path.join(args.tensorboard_dir, "occlusion1")
+            
+        metric_to_monitor = "ADD(-S)"
+        mode = "max"
     else:
         snapshot_path = args.snapshot_path
         save_path = args.validation_image_save_path
