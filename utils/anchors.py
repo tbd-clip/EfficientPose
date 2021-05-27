@@ -139,6 +139,7 @@ def anchor_targets_bbox(
             transformation_batch[index, positive_indices, -1] = 1
 
             # compute target class labels
+            print(annotations['labels'][argmax_overlaps_inds[positive_indices], "LOL")
             labels_batch[index, positive_indices, annotations['labels'][argmax_overlaps_inds[positive_indices]].astype(int)] = 1
 
             regression_batch[index, :, :4] = bbox_transform(anchors, annotations['bboxes'][argmax_overlaps_inds, :])
@@ -153,11 +154,6 @@ def anchor_targets_bbox(
             labels_batch[index, indices, -1] = -1
             regression_batch[index, indices, -1] = -1
             transformation_batch[index, indices, -1] = -1
-
-    #labels_batch = tf.Print(labels_batch, [labels_batch], message=" label_sums.shape: ", summarize=-1)
-    #labels_batch = tf.Print(labels_batch, [tf.shape(labels_batch)], message=" label_sums.shape: ", summarize=-1)
-    print(labels_batch.shape, "LOL",)
-    print(labels_batch[0,0,:-1])
             
     return labels_batch, regression_batch, transformation_batch
 
