@@ -428,7 +428,6 @@ def evaluate(
             detections_translations = all_detections[i][label][2]
             detections_scalings = all_detections[i][label][3]
             annotations          = all_annotations[i][label][0]
-            print(annotations)
             annotations_rotations = all_annotations[i][label][1]
             annotations_translations = all_annotations[i][label][2]
             num_annotations     += annotations.shape[0]
@@ -444,7 +443,6 @@ def evaluate(
 
                 overlaps             = compute_overlap(np.expand_dims(d, axis=0), annotations)
                 assigned_annotation  = np.argmax(overlaps, axis=1)
-                print(assigned_annotation)
                 max_overlap          = overlaps[0, assigned_annotation]
                 assigned_rotation    = annotations_rotations[assigned_annotation, :3]
                 assigned_translation = annotations_translations[assigned_annotation, :]
