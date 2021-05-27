@@ -262,7 +262,8 @@ def create_callbacks(training_model, prediction_model, validation_generator, arg
         if args.tensorboard_dir:
             tensorboard_dir = os.path.join(args.tensorboard_dir, "occlusion1")
             
-        metric_to_monitor = "ADD(-S)"
+        # @TODO trying to get it to save more often, so I don't have to wait as long to replicate a bug
+        metric_to_monitor = "mAP"
         mode = "max"
     else:
         snapshot_path = args.snapshot_path
