@@ -176,6 +176,7 @@ def _get_annotations(generator):
     for i in progressbar.progressbar(range(generator.size()), prefix='Parsing annotations: '):
         # load the annotations
         annotations = generator.load_annotations(i)
+        print(annotations)
 
         # copy detections to all_annotations
         for label in range(generator.num_classes()):
