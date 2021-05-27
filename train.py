@@ -68,6 +68,9 @@ def parse_args(args):
     
     occlusion_parser = subparsers.add_parser('occlusion')
     occlusion_parser.add_argument('occlusion_path', help = 'Path to dataset directory (ie. /Datasets/Linemod_preprocessed/).')
+    
+    occlusion1_parser = subparsers.add_parser('occlusion1')
+    occlusion1_parser.add_argument('occlusion1_path', help = 'Path to dataset directory (ie. /Datasets/Linemod_preprocessed/).')
 
     parser.add_argument('--rotation-representation', help = 'Which representation of the rotation should be used. Choose from "axis_angle", "rotation_matrix" and "quaternion"', default = 'axis_angle')    
 
