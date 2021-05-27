@@ -661,6 +661,10 @@ class OcclusionGenerator1(Generator):
         """ Load intrinsic camera parameter for an image_index.
         """
         return np.copy(self.infos[image_index]["cam_K_np"])
+    
+    # @TODO make more general for the nuscenes training! remove for anything besides occlusion1 testing!
+    def get_bcube_prior(self):
+        return self.all_bcube_priors_for_loss[0]
         
     
 
