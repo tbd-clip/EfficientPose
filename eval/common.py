@@ -428,6 +428,7 @@ def evaluate(
             detections_translations = all_detections[i][label][2]
             detections_scalings = all_detections[i][label][3]
             annotations          = all_annotations[i][label][0]
+            print(annotations)
             annotations_rotations = all_annotations[i][label][1]
             annotations_translations = all_annotations[i][label][2]
             num_annotations     += annotations.shape[0]
