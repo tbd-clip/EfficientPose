@@ -417,7 +417,6 @@ def evaluate(
         true_positives_add  = np.zeros((0,))
         true_positives_add_s  = np.zeros((0,))
         model_3d_points = all_3d_models[label]
-        print(model_3d_points.shape, "LOL")
         model_3d_diameter = all_3d_model_diameters[label]
         true_positives_5cm_5degree  = np.zeros((0,))
         translation_diffs = np.zeros((0,))
