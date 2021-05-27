@@ -443,6 +443,7 @@ def evaluate(
 
                 overlaps             = compute_overlap(np.expand_dims(d, axis=0), annotations)
                 assigned_annotation  = np.argmax(overlaps, axis=1)
+                print(assigned_annotation)
                 max_overlap          = overlaps[0, assigned_annotation]
                 assigned_rotation    = annotations_rotations[assigned_annotation, :3]
                 assigned_translation = annotations_translations[assigned_annotation, :]
