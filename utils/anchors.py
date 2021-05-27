@@ -154,7 +154,8 @@ def anchor_targets_bbox(
             regression_batch[index, indices, -1] = -1
             transformation_batch[index, indices, -1] = -1
 
-    labels = tf.Print(labels_batch, [tf.shape(label_sums)], message=" label_sums.shape: ", summarize=-1)
+    labels_batch = tf.Print(labels_batch, [labels_batch], message=" label_sums.shape: ", summarize=-1)
+    labels_batch = tf.Print(labels_batch, [tf.shape(labels_batch)], message=" label_sums.shape: ", summarize=-1)
             
     return labels_batch, regression_batch, transformation_batch
 
