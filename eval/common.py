@@ -187,7 +187,7 @@ def _get_annotations(generator):
     return all_annotations
 
 
-def check_6d_pose_2d_reprojection(model_3d_points, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, camera_matrix, pixel_threshold = 5.0):
+def check_6d_pose_2d_reprojection(bcube_prior, model_3d_points, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, camera_matrix, pixel_threshold = 5.0):
     """ Check if the predicted 6D pose of a single example is considered to be correct using the 2D reprojection metric
 
     # Arguments
@@ -203,7 +203,7 @@ def check_6d_pose_2d_reprojection(model_3d_points, rotation_gt, translation_gt, 
     """
     #transform points into camera coordinate system with gt and prediction transformation parameters respectively
     transformed_points_gt = np.dot(model_3d_points, rotation_gt.T) + translation_gt
-    transformed_points_pred = np.dot(model_3d_points * scaling_pred, rotation_pred.T) + translation_pred
+    transformed_points_pred = np.dot(bcube_prior * scaling_pred, rotation_pred.T) + translation_pred
     
     #project the points on the 2d image plane
     points_2D_gt, _ = np.squeeze(cv2.projectPoints(transformed_points_gt, np.zeros((3,)), np.zeros((3,)), camera_matrix, None))
@@ -220,7 +220,7 @@ def check_6d_pose_2d_reprojection(model_3d_points, rotation_gt, translation_gt, 
     return is_correct
 
 
-def check_6d_pose_add(model_3d_points, model_3d_diameter, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, diameter_threshold = 0.1):
+def check_6d_pose_add(bcube_prior, model_3d_points, model_3d_diameter, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, diameter_threshold = 0.1):
     """ Check if the predicted 6D pose of a single example is considered to be correct using the ADD metric
 
     # Arguments
@@ -237,7 +237,7 @@ def check_6d_pose_add(model_3d_points, model_3d_diameter, rotation_gt, translati
         transformed_points_gt: numpy array with shape (num_3D_points, 3) containing the object's 3D points transformed with the ground truth 6D pose
     """
     transformed_points_gt = np.dot(model_3d_points, rotation_gt.T) + translation_gt
-    transformed_points_pred = np.dot(model_3d_points* scaling_pred, rotation_pred.T) + translation_pred
+    transformed_points_pred = np.dot(bcube_prior * scaling_pred, rotation_pred.T) + translation_pred
 
     distances = np.linalg.norm(transformed_points_gt - transformed_points_pred, axis = -1)
     mean_distances = np.mean(distances)
@@ -250,7 +250,7 @@ def check_6d_pose_add(model_3d_points, model_3d_diameter, rotation_gt, translati
     return is_correct, mean_distances, transformed_points_gt
 
 
-def check_6d_pose_add_s(model_3d_points, model_3d_diameter, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, diameter_threshold = 0.1, max_points = 1000):    
+def check_6d_pose_add_s(bcube_prior, model_3d_points, model_3d_diameter, rotation_gt, translation_gt, rotation_pred, translation_pred, scaling_pred, diameter_threshold = 0.1, max_points = 1000):    
     """ Check if the predicted 6D pose of a single example is considered to be correct using the ADD-S metric
 
     # Arguments
@@ -267,7 +267,7 @@ def check_6d_pose_add_s(model_3d_points, model_3d_diameter, rotation_gt, transla
         mean_distances: The average distance between the object's 3D points transformed with the predicted and ground truth 6D pose respectively
     """
     transformed_points_gt = np.dot(model_3d_points, rotation_gt.T) + translation_gt
-    transformed_points_pred = np.dot(model_3d_points * scaling_pred, rotation_pred.T) + translation_pred
+    transformed_points_pred = np.dot(bcube_prior * scaling_pred, rotation_pred.T) + translation_pred
     #calc all distances between all point pairs and get the minimum distance for every point
     num_points = transformed_points_gt.shape[0]
     
@@ -390,6 +390,7 @@ def evaluate(
     all_annotations    = _get_annotations(generator)
     all_3d_models      = generator.get_models_3d_points_dict()
     all_3d_model_diameters = generator.get_objects_diameter_dict()
+    bcube_prior = generator.get_bcube_prior()
     average_precisions = {}
     add_metric = {}
     add_s_metric = {}
@@ -414,6 +415,7 @@ def evaluate(
         true_positives_add  = np.zeros((0,))
         true_positives_add_s  = np.zeros((0,))
         model_3d_points = all_3d_models[label]
+        print(model_3d_points.shape, "LOL")
         model_3d_diameter = all_3d_model_diameters[label]
         true_positives_5cm_5degree  = np.zeros((0,))
         translation_diffs = np.zeros((0,))
@@ -453,7 +455,8 @@ def evaluate(
                     true_positives  = np.append(true_positives, 1)
                     detected_annotations.append(assigned_annotation)
                     #correct 2d object detection => check if the 6d pose is also correct
-                    is_correct_6d_pose_add, mean_distances_add, transformed_points_gt = check_6d_pose_add(model_3d_points,
+                    is_correct_6d_pose_add, mean_distances_add, transformed_points_gt = check_6d_pose_add(bcube_prior,
+                                                                                                        model_3d_points,
                                                                                                         model_3d_diameter,
                                                                                                         rotation_gt = generator.axis_angle_to_rotation_mat(assigned_rotation),
                                                                                                         translation_gt = np.squeeze(assigned_translation),
@@ -462,7 +465,8 @@ def evaluate(
                                                                                                         scaling_pred = d_scaling,
                                                                                                         diameter_threshold = diameter_threshold)
                     
-                    is_correct_6d_pose_add_s, mean_distances_add_s = check_6d_pose_add_s(model_3d_points,
+                    is_correct_6d_pose_add_s, mean_distances_add_s = check_6d_pose_add_s(bcube_prior,
+                                                                                       model_3d_points,
                                                                                        model_3d_diameter,
                                                                                        rotation_gt = generator.axis_angle_to_rotation_mat(assigned_rotation),
                                                                                        translation_gt = np.squeeze(assigned_translation),
@@ -477,7 +481,8 @@ def evaluate(
                                                                                                                          translation_pred = d_translation,
                                                                                                                          scaling_pred = d_scaling)
                     
-                    is_correct_2d_projection = check_6d_pose_2d_reprojection(model_3d_points,
+                    is_correct_2d_projection = check_6d_pose_2d_reprojection(bcube_prior,
+                                                                             model_3d_points,
                                                                              rotation_gt = generator.axis_angle_to_rotation_mat(assigned_rotation),
                                                                              translation_gt = np.squeeze(assigned_translation),
                                                                              rotation_pred = generator.axis_angle_to_rotation_mat(d_rotation),
