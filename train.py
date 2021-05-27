@@ -299,9 +299,9 @@ def create_callbacks(training_model, prediction_model, validation_generator, arg
         checkpoint = keras.callbacks.ModelCheckpoint(os.path.join(snapshot_path, 'phi_{phi}_{dataset_type}_best_{metric}.h5'.format(phi = str(args.phi), metric = metric_to_monitor, dataset_type = args.dataset_type)),
                                                      verbose = 1,
                                                      #save_weights_only = True,
-                                                     save_best_only = True,
-                                                     monitor = metric_to_monitor,
-                                                     mode = mode)
+                                                     save_best_only = False)#,
+                                                     #monitor = metric_to_monitor,
+                                                     #mode = mode)
         callbacks.append(checkpoint)
 
     callbacks.append(keras.callbacks.ReduceLROnPlateau(
