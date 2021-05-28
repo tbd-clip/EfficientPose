@@ -69,6 +69,9 @@ def parse_args(args):
     occlusion_parser = subparsers.add_parser('occlusion')
     occlusion_parser.add_argument('occlusion_path', help = 'Path to dataset directory (ie. /Datasets/Linemod_preprocessed/).')
 
+    occlusion_parser = subparsers.add_parser('nuscenes')
+    occlusion_parser.add_argument('nuscenes_path', help='Path to dataset directory (ie. /Datasets/nuscenes/).')
+
     parser.add_argument('--rotation-representation', help = 'Which representation of the rotation should be used. Choose from "axis_angle", "rotation_matrix" and "quaternion"', default = 'axis_angle')    
 
     parser.add_argument('--weights', help = 'File containing weights to init the model parameter')
@@ -222,8 +225,19 @@ def create_callbacks(training_model, prediction_model, validation_generator, arg
     callbacks = []
 
     tensorboard_callback = None
-    
-    if args.dataset_type == "linemod":
+
+    if args.dataset_type == "nuscenes":
+        snapshot_path = os.path.join(args.snapshot_path, "nuscenes")
+        if args.validation_image_save_path:
+            save_path = os.path.join(args.validation_image_save_path, "nuscenes")
+        else:
+            save_path = args.validation_image_save_path
+        if args.tensorboard_dir:
+            tensorboard_dir = os.path.join(args.tensorboard_dir, "nuscenes")
+
+        metric_to_monitor = "ADD(-S)"
+        mode = "max"
+    elif args.dataset_type == "linemod":
         snapshot_path = os.path.join(args.snapshot_path, "object_" + str(args.object_id))
         if args.validation_image_save_path:
             save_path = os.path.join(args.validation_image_save_path, "object_" + str(args.object_id))
@@ -316,7 +330,27 @@ def create_generators(args):
         'phi': args.phi,
     }
 
-    if args.dataset_type == 'linemod':
+    if args.dataset_type == 'nuscenes':
+        from generators.nuscenes import NuScenesGenerator
+        train_generator = NuScenesGenerator(
+            args.nuscenes_path,
+            rotation_representation=args.rotation_representation,
+            use_colorspace_augmentation=not args.no_color_augmentation,
+            use_6DoF_augmentation=not args.no_6dof_augmentation,
+            **common_args
+        )
+        validation_generator = NuScenesGenerator(
+            args.nuscenes_path,
+            train=False,
+            shuffle_dataset=False,
+            shuffle_groups=False,
+            rotation_representation=args.rotation_representation,
+            use_colorspace_augmentation=False,
+            use_6DoF_augmentation=False,
+            **common_args
+        )
+
+    elif args.dataset_type == 'linemod':
         from generators.linemod import LineModGenerator
         train_generator = LineModGenerator(
             args.linemod_path,
