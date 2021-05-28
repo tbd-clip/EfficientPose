@@ -183,8 +183,9 @@ def _get_annotations(generator):
             if not generator.has_label(label):
                 continue
 
+            # all_annotations[i][label] = (annotations['bboxes'][annotations['single_class_labels'] == label, :].copy(), annotations['rotations'][annotations['labels'] == label, :].copy(), annotations['translations'][annotations['labels'] == label, :].copy())
             all_annotations[i][label] = (annotations['bboxes'][annotations['single_class_labels'] == label, :].copy(), annotations['rotations'][annotations['labels'] == label, :].copy(), annotations['translations'][annotations['labels'] == label, :].copy())
-
+            
     return all_annotations
 
 
