@@ -4,7 +4,6 @@ from collections import defaultdict
 import cv2
 import numpy as np
 from nuscenes.nuscenes import NuScenes
-from nuscenes.utils.data_classes import Box
 from nuscenes.utils.geometry_utils import BoxVisibility, view_points
 
 from generators.common import Generator
@@ -92,21 +91,31 @@ class NuScenesGenerator(Generator):
         """
         return self.rotation_parameter
 
-    def load_mask(self, image_index):
-        """ Load mask at the image_index.
+    def get_models_3d_points_dict(self, class_idx_as_key=True):
         """
-        # TODO - if this causes trouble, probably need to change common loader or training code
-        return np.zeros((1600, 900), dtype=np.float32)
+       Returns either the 3d model points dict with class idx as key or the model name as key
+        Args:
+            class_idx_as_key: Boolean indicating wheter to return the class indices or the class names as keys
+        Returns:
+            Dictionary containing the class indices or the class names as keys and the 3D model points as values
 
-    def load_camera_matrix(self, image_index):
-        """ Load intrinsic camera parameter for an image_index.
         """
-        sample_index = image_index // len(NuScenesGenerator.SENSORS)
-        sample = self._data.sample[sample_index]
-        sensor = NuScenesGenerator.SENSORS[image_index % len(NuScenesGenerator.SENSORS)]
-        sample_data_token = sample['data'][sensor]
-        _, _, cam_data = self._data.get_sample_data(sample_data_token, box_vis_level=BoxVisibility.ALL)
-        return cam_data
+        # TODO
+        return self.get_bbox_3d_dict(class_idx_as_key)
+
+
+    def get_objects_diameter_dict(self, class_idx_as_key=True):
+        """
+       Returns either the diameter dict with class idx as key or the model name as key
+        Args:
+            class_idx_as_key: Boolean indicating wheter to return the class indices or the class names as keys
+        Returns:
+            Dictionary containing the class indices or the class names as keys and the 3D model diameters as values
+
+        """
+        # TODO
+        return defaultdict(lambda: 1.0)
+
 
     @property
     def class_names(self):
@@ -144,6 +153,12 @@ class NuScenesGenerator(Generator):
         path = self._data.get_sample_data_path(token)
         return cv2.imread(path)
 
+    def load_mask(self, image_index):
+        """ Load mask at the image_index.
+        """
+        # TODO - if this causes trouble, probably need to change common loader or training code
+        return np.zeros((1600, 900), dtype=np.float32)
+
     def load_annotations(self, image_index):
         num_all_rotation_parameters = self.rotation_parameter + 2 #+1 for class id and +1 for is_symmetric flag
 
@@ -175,6 +190,16 @@ class NuScenesGenerator(Generator):
             annotations["translations_x_y_2D"][i, :] = trans_2d.squeeze()[:2]
 
         return annotations
+
+    def load_camera_matrix(self, image_index):
+        """ Load intrinsic camera parameter for an image_index.
+        """
+        sample_index = image_index // len(NuScenesGenerator.SENSORS)
+        sample = self._data.sample[sample_index]
+        sensor = NuScenesGenerator.SENSORS[image_index % len(NuScenesGenerator.SENSORS)]
+        sample_data_token = sample['data'][sensor]
+        _, _, cam_data = self._data.get_sample_data(sample_data_token, box_vis_level=BoxVisibility.ALL)
+        return cam_data
 
     def is_symmetric_object(self, name_or_object_id):
         """
