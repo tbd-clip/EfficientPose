@@ -263,7 +263,7 @@ def create_callbacks(training_model, prediction_model, validation_generator, arg
             tensorboard_dir = os.path.join(args.tensorboard_dir, "occlusion1")
             
         # @TODO trying to get it to save more often, so I don't have to wait as long to replicate a bug
-        metric_to_monitor = "mAP"
+        metric_to_monitor = "ADD(-S)"
         mode = "max"
     else:
         snapshot_path = args.snapshot_path
@@ -299,9 +299,9 @@ def create_callbacks(training_model, prediction_model, validation_generator, arg
         checkpoint = keras.callbacks.ModelCheckpoint(os.path.join(snapshot_path, 'phi_{phi}_{dataset_type}_best_{metric}.h5'.format(phi = str(args.phi), metric = metric_to_monitor, dataset_type = args.dataset_type)),
                                                      verbose = 1,
                                                      #save_weights_only = True,
-                                                     save_best_only = False)#,
-                                                     #monitor = metric_to_monitor,
-                                                     #mode = mode)
+                                                     save_best_only = True,
+                                                     monitor = metric_to_monitor,
+                                                     mode = mode)
         callbacks.append(checkpoint)
 
     callbacks.append(keras.callbacks.ReduceLROnPlateau(
