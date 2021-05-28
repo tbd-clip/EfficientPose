@@ -44,6 +44,12 @@ class NuScenesGenerator(Generator):
                               verbose=True)
 
         self.init_num_rotation_parameters(**kwargs)
+        self.name_to_mask_value = defaultdict(int)
+        # TODO - Just using index order as `object_id` and `class` and `class_label`
+        self.class_to_name = {i: n for i, n in enumerate(self.class_names)}
+        self.name_to_class = {n: i for i, n in enumerate(self.class_names)}
+        self.object_ids_to_class_labels = {i: i for i, _ in enumerate(self.class_names)}
+        self.class_labels_to_object_ids = self.object_ids_to_class_labels
 
         self.dataset_base_path = dataset_base_path
         self.dataset_path = os.path.join(self.dataset_base_path, "data")
@@ -86,6 +92,21 @@ class NuScenesGenerator(Generator):
         """
         return self.rotation_parameter
 
+    def load_mask(self, image_index):
+        """ Load mask at the image_index.
+        """
+        # TODO - if this causes trouble, probably need to change common loader or training code
+        return np.zeros((1600, 900), dtype=np.float32)
+
+    def load_camera_matrix(self, image_index):
+        """ Load intrinsic camera parameter for an image_index.
+        """
+        sample_index = image_index // len(NuScenesGenerator.SENSORS)
+        sample = self._data.sample[sample_index]
+        sensor = NuScenesGenerator.SENSORS[image_index % len(NuScenesGenerator.SENSORS)]
+        sample_data_token = sample['data'][sensor]
+        _, _, cam_data = self._data.get_sample_data(sample_data_token, box_vis_level=BoxVisibility.ALL)
+        return cam_data
 
     @property
     def class_names(self):
@@ -143,14 +164,17 @@ class NuScenesGenerator(Generator):
         for i, box in enumerate(boxes):
             label = self.name_to_label(box.name)
             annotations["labels"][i] = label
-            annotations["bboxes"][i, :], _ = self.get_2d_bbox(box, cam_data)
+            annotations["bboxes"][i, :] = self.get_2d_bbox(box, cam_data)
             #transform rotation into the needed representation
             annotations["rotations"][i, :-2] = self.transform_rotation(box.rotation_matrix, self.rotation_representation)
             annotations["rotations"][i, -2] = float(self.is_symmetric_object(box.name))
             annotations["rotations"][i, -1] = label
 
             annotations["translations"][i, :] = box.center
-            annotations["translations_x_y_2D"][i, :] = view_points(box.center, cam_data, normalize=True)
+            trans_2d = view_points(box.center[:, np.newaxis], cam_data, normalize=True)
+            annotations["translations_x_y_2D"][i, :] = trans_2d.squeeze()[:2]
+
+        return annotations
 
     def is_symmetric_object(self, name_or_object_id):
         """
