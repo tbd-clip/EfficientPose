@@ -61,11 +61,13 @@ class NuScenesGenerator(Generator):
         # set with names and indices of symmetric objects
         self.symmetric_objects = set()
 
-        self._all_image_tokens = [
-            sample['data'][sensor]
-            for sample in self._data.sample
-            for sensor in NuScenesGenerator.SENSORS
-        ]
+        self.image_paths, self.annotations, self.camera_intrinsics =\
+            self.prepare_dataset()
+
+        if self.shuffle_dataset:
+            self.image_paths, self.annotations, self.camera_intrinsics =\
+                self.shuffle_sequences(
+                    self.image_paths, self.annotations, self.camera_intrinsics)
 
         super().__init__(**kwargs)
 
@@ -76,6 +78,75 @@ class NuScenesGenerator(Generator):
         concatenated = list(zip(*seqs))
         random.shuffle(concatenated)
         return zip(*concatenated)
+
+    def prepare_dataset(self):
+        """
+        Prepares the dataset and converts the data from the NuScenes format to the EfficientPose format
+        Args:
+            object_path: path to the Linemod subscene containing Occlusion (This is a hardcoded parameter in the init function)
+            data_examples: List containing all data examples of the used dataset split (train or test)
+            gt_dict: Dictionary mapping the example id's to the corresponding ground truth data
+            info_dict: Dictionary mapping the example id's to the intrinsic camera parameters
+            class_to_valid_examples: Dictionary mapping the object class to a tuple of all valid data examples of this object.
+                                    In Occlusion there are usually all objects annotated even if they are not visible at all.
+                                    So filter those annotations out.
+        Returns:
+            image_paths: List with all rgb image paths in the dataset split
+            mask_paths: List with all segmentation mask paths in the dataset split
+            depth_paths: List with all depth image paths in the dataset split (Currently not used in EfficientPose)
+            annotations: List with all annotation dictionaries in the dataset split
+            infos: List with all info dictionaries (intrinsic camera parameters) in the dataset split
+
+        """
+        # +1 for class id and +1 for is_symmetric flag
+        num_all_rotation_parameters = self.rotation_parameter + 2
+        num_sensors = len(NuScenesGenerator.SENSORS)
+
+        image_paths = []
+        annotations = []
+        intrinsics = []
+
+        for sample_index, sample in enumerate(self._data.sample):
+            for sensor_index, sensor in enumerate(NuScenesGenerator.SENSORS):
+                image_index = sample_index * num_sensors + sensor_index
+                image_token = sample['data'][sensor]
+
+                sample_data_token = sample['data'][sensor]
+                path, boxes, cam_data = self._data.get_sample_data(
+                    sample_data_token, box_vis_level=BoxVisibility.ALL)
+
+                image_paths.append(path)
+                intrinsics.append(cam_data)
+
+                # build annotations
+                n = len(boxes)  # number of annotations for this image
+                ann = {
+                    'labels': np.zeros((n,), dtype=np.int),
+                    'bboxes': np.zeros((n, 4)),
+                    'rotations': np.zeros((n, num_all_rotation_parameters)),
+                    'translations': np.zeros((n, self.translation_parameter)),
+                    'translations_x_y_2D': np.zeros((n, 2))
+                }
+
+                for i, box in enumerate(boxes):
+                    label = self.name_to_label(box.name)
+                    is_symmetric = self.is_symmetric_object(box.name)
+                    trans_2d = view_points(
+                        box.center[:, np.newaxis], cam_data, normalize=True)
+                    rotation = self.transform_rotation(
+                        box.rotation_matrix, self.rotation_representation)
+
+                    ann["labels"][i] = label
+                    ann["bboxes"][i, :] = self.get_2d_bbox(box, cam_data)
+                    ann["rotations"][i, :-2] = rotation
+                    ann["rotations"][i, -2] = float(is_symmetric)
+                    ann["rotations"][i, -1] = label
+                    ann["translations"][i, :] = box.center
+                    ann["translations_x_y_2D"][i, :] = trans_2d.squeeze()[:2]
+
+                annotations.append(ann)
+
+        return image_paths, annotations, intrinsics
 
     def get_bbox_3d_dict(self, class_idx_as_key=True):
         """
@@ -160,9 +231,7 @@ class NuScenesGenerator(Generator):
         return 1600. / 900.
 
     def load_image(self, image_index):
-        token = self._all_image_tokens[image_index]
-        path = self._data.get_sample_data_path(token)
-        return cv2.imread(path)
+        return cv2.imread(self.image_paths[image_index])
 
     def load_mask(self, image_index):
         """ Load mask at the image_index.
@@ -171,46 +240,10 @@ class NuScenesGenerator(Generator):
         return np.zeros((1600, 900), dtype=np.float32)
 
     def load_annotations(self, image_index):
-        num_all_rotation_parameters = self.rotation_parameter + 2 #+1 for class id and +1 for is_symmetric flag
-
-        sample_index = image_index // len(NuScenesGenerator.SENSORS)
-        sample = self._data.sample[sample_index]
-        sensor = NuScenesGenerator.SENSORS[image_index % len(NuScenesGenerator.SENSORS)]
-        sample_data_token = sample['data'][sensor]
-        path, boxes, cam_data = self._data.get_sample_data(sample_data_token, box_vis_level=BoxVisibility.ALL)
-
-        n = len(boxes)
-        # first dimension of each is the number of annotations for this image
-        annotations = {'labels': np.zeros((n,)),
-                       'bboxes': np.zeros((n, 4)),
-                       'rotations': np.zeros((n, num_all_rotation_parameters)),
-                       'translations': np.zeros((n, self.translation_parameter)),
-                       'translations_x_y_2D': np.zeros((n, 2))}
-
-        for i, box in enumerate(boxes):
-            label = self.name_to_label(box.name)
-            annotations["labels"][i] = label
-            annotations["bboxes"][i, :] = self.get_2d_bbox(box, cam_data)
-            #transform rotation into the needed representation
-            annotations["rotations"][i, :-2] = self.transform_rotation(box.rotation_matrix, self.rotation_representation)
-            annotations["rotations"][i, -2] = float(self.is_symmetric_object(box.name))
-            annotations["rotations"][i, -1] = label
-
-            annotations["translations"][i, :] = box.center
-            trans_2d = view_points(box.center[:, np.newaxis], cam_data, normalize=True)
-            annotations["translations_x_y_2D"][i, :] = trans_2d.squeeze()[:2]
-
-        return annotations
+        return self.annotations[image_index]
 
     def load_camera_matrix(self, image_index):
-        """ Load intrinsic camera parameter for an image_index.
-        """
-        sample_index = image_index // len(NuScenesGenerator.SENSORS)
-        sample = self._data.sample[sample_index]
-        sensor = NuScenesGenerator.SENSORS[image_index % len(NuScenesGenerator.SENSORS)]
-        sample_data_token = sample['data'][sensor]
-        _, _, cam_data = self._data.get_sample_data(sample_data_token, box_vis_level=BoxVisibility.ALL)
-        return cam_data
+        return self.camera_intrinsics[image_index]
 
     def is_symmetric_object(self, name_or_object_id):
         """
