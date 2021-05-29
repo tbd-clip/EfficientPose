@@ -39,7 +39,8 @@ class NuScenesGenerator(Generator):
             shuffle_dataset: Boolean whether to shuffle the dataset or not
             symmetric_objects: set with names and indices of symmetric objects
         """
-        self._data = NuScenes(version='v1.0-trainval',
+        # TODO : validation split
+        self._data = NuScenes(version='v1.0-mini',
                               dataroot=dataset_base_path,
                               verbose=True)
 
