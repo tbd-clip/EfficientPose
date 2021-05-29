@@ -155,7 +155,6 @@ class NuScenesGenerator(Generator):
     def compute_boxes(self):
         count = Counter()
         sizes = {}
-        result = {}
 
         # sample_annotation['category_name'] = 'movable_object.trafficcone'
         # sample_annotation['size'] = [0.3, 0.291, 0.734]
@@ -167,10 +166,17 @@ class NuScenesGenerator(Generator):
 
         for name, size in sizes.items():
             np.divide(size, count[name], out=size)
-            result[name] = Box([0, 0, 0], list(size), Quaternion(),
-                               label=self.name_to_class[name],
-                               name=name)
-        return result
+
+        # Handle classes not seen in any annotation
+        for name in self.class_names:
+            sizes.setdefault(name, np.ones((3,)))
+
+        return {
+            name: Box([0, 0, 0], list(size), Quaternion(),
+                      label=self.name_to_class[name],
+                      name=name)
+            for name, size in sizes.items()
+        }
 
     def get_bbox_3d_dict(self, class_idx_as_key=True):
         """
