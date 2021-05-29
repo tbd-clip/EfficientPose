@@ -296,7 +296,9 @@ class NuScenesGenerator(Generator):
         return 1600. / 900.
 
     def load_image(self, image_index):
-        return cv2.imread(self.image_paths[image_index])
+        image = cv2.imread(self.image_paths[image_index])
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return image
 
     def load_mask(self, image_index):
         """ Load mask at the image_index.
