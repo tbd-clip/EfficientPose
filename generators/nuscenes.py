@@ -1,4 +1,5 @@
 import os
+import random
 from collections import defaultdict
 
 import cv2
@@ -65,6 +66,14 @@ class NuScenesGenerator(Generator):
         ]
 
         super().__init__(**kwargs)
+
+    def shuffle_sequences(self, *seqs):
+        """
+        Shuffles lists so that the corresponding entries still match
+        """
+        concatenated = list(zip(*seqs))
+        random.shuffle(concatenated)
+        return zip(*concatenated)
 
     def get_bbox_3d_dict(self, class_idx_as_key=True):
         """
