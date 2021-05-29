@@ -7,6 +7,7 @@ import numpy as np
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.data_classes import Box
 from nuscenes.utils.geometry_utils import BoxVisibility, view_points
+from nuscenes.utils.splits import create_splits_scenes
 from pyquaternion import Quaternion
 
 from generators.common import Generator
@@ -41,10 +42,19 @@ class NuScenesGenerator(Generator):
             shuffle_dataset: Boolean whether to shuffle the dataset or not
             symmetric_objects: set with names and indices of symmetric objects
         """
-        # TODO : validation split
+        train = kwargs.get('train', True)
+        splits = create_splits_scenes()
+
+        # TODO - using mini dataset for now - switch to full
         self._data = NuScenes(version='v1.0-mini',
                               dataroot=dataset_base_path,
                               verbose=True)
+        self._split = splits['mini_train'] if train else splits['mini_val']
+        # self._data = NuScenes(version='v1.0-trainval',
+        #                       dataroot=dataset_base_path,
+        #                       verbose=True)
+        # self._split = splits['train'] if train else splits['val']
+        self._samples, self._anns = self.prepare_split(self._data, self._split)
 
         self.init_num_rotation_parameters(**kwargs)
         self.name_to_mask_value = defaultdict(int)
@@ -74,6 +84,25 @@ class NuScenesGenerator(Generator):
         self.class_names_to_boxes = self.compute_boxes()
 
         super().__init__(**kwargs)
+
+    def prepare_split(self, dataset, split):
+        samples = []
+        anns = []
+        for scene in dataset.scene:
+            if scene['name'] in split:
+                sample_token = scene['first_sample_token']
+                i = 0
+                while True:
+                    sample = dataset.get('sample', sample_token)
+                    assert sample['scene_token'] == scene['token']
+                    samples.append(sample)
+                    for a in sample['anns']:
+                        anns.append(dataset.get('sample_annotation', a))
+                    i += 1
+                    sample_token = sample['next']
+                    if i > scene['nbr_samples'] or not sample_token:
+                        break
+        return samples, anns
 
     def shuffle_sequences(self, *seqs):
         """
@@ -110,7 +139,7 @@ class NuScenesGenerator(Generator):
         annotations = []
         intrinsics = []
 
-        for sample_index, sample in enumerate(self._data.sample):
+        for sample_index, sample in enumerate(self._samples):
             for sensor_index, sensor in enumerate(NuScenesGenerator.SENSORS):
                 image_index = sample_index * num_sensors + sensor_index
                 image_token = sample['data'][sensor]
@@ -158,7 +187,7 @@ class NuScenesGenerator(Generator):
 
         # sample_annotation['category_name'] = 'movable_object.trafficcone'
         # sample_annotation['size'] = [0.3, 0.291, 0.734]
-        for a in self._data.sample_annotation:
+        for a in self._anns:
             name = a['category_name']
             count[name] += 1
             s = sizes.setdefault(name, np.zeros((3,)))
@@ -240,7 +269,7 @@ class NuScenesGenerator(Generator):
         return [c['name'] for c in self._data.category]
 
     def size(self):
-        return len(self._data.sample)
+        return len(self._samples)
 
     def num_classes(self):
         return len(self._data.category)
