@@ -149,7 +149,21 @@ def create_generators(args):
         'phi': args.phi,
     }
 
-    if args.dataset_type == 'linemod':
+    if args.dataset_type == 'nuscenes':
+        from generators.nuscenes import NuScenesGenerator
+        generator = NuScenesGenerator(
+            args.nuscenes_path,
+            train=False,
+            shuffle_dataset=False,
+            shuffle_groups=False,
+            rotation_representation=args.rotation_representation,
+            use_colorspace_augmentation=False,
+            use_6DoF_augmentation=False,
+            translation_scale_norm=1.0,
+            **common_args
+        )
+
+    elif args.dataset_type == 'linemod':
         from generators.linemod import LineModGenerator
         
         generator = LineModGenerator(
