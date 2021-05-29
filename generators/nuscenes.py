@@ -1,11 +1,13 @@
 import os
 import random
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 import cv2
 import numpy as np
 from nuscenes.nuscenes import NuScenes
+from nuscenes.utils.data_classes import Box
 from nuscenes.utils.geometry_utils import BoxVisibility, view_points
+from pyquaternion import Quaternion
 
 from generators.common import Generator
 
@@ -68,6 +70,8 @@ class NuScenesGenerator(Generator):
             self.image_paths, self.annotations, self.camera_intrinsics =\
                 self.shuffle_sequences(
                     self.image_paths, self.annotations, self.camera_intrinsics)
+
+        self.class_names_to_boxes = self.compute_boxes()
 
         super().__init__(**kwargs)
 
@@ -148,56 +152,82 @@ class NuScenesGenerator(Generator):
 
         return image_paths, annotations, intrinsics
 
+    def compute_boxes(self):
+        count = Counter()
+        sizes = {}
+        result = {}
+
+        # sample_annotation['category_name'] = 'movable_object.trafficcone'
+        # sample_annotation['size'] = [0.3, 0.291, 0.734]
+        for a in self._data.sample_annotation:
+            name = a['category_name']
+            count[name] += 1
+            s = sizes.setdefault(name, np.zeros((3,)))
+            np.add(s, np.array(a['size']), out=s)
+
+        for name, size in sizes.items():
+            np.divide(size, count[name], out=size)
+            result[name] = Box([0, 0, 0], list(size), Quaternion(),
+                               label=self.name_to_class[name],
+                               name=name)
+        return result
+
     def get_bbox_3d_dict(self, class_idx_as_key=True):
         """
-       Returns a dictionary which either maps the class indices or the class names to the 3D model cuboids
+        Returns a dict which maps classes to 3D model cuboids
         Args:
-            class_idx_as_key: Boolean indicating wheter to return the class indices or the class names as keys
+            class_idx_as_key: boolean
+                use class indices as keys (otherwise, use class names as keys)
         Returns:
-            Dictionary containing the class indices or the class names as keys and the 3D model cuboids as values
-
+            dict of <int or str>: <np.float: 8, 3>
+            First four corners are the ones facing forward.
+            The last four are the ones facing backwards.
         """
-        # TODO
-        box = np.array([[1,  1,  1,  1, -1, -1, -1, -1],
-                        [1, -1, -1,  1,  1, -1, -1,  1],
-                        [1,  1, -1, -1,  1,  1, -1, -1]]).T
-        if class_idx_as_key:
-            return {i: box for i in range(len(self.class_names))}
-        else:
-            return {name: box for name in self.class_names}
+        result = {}
+        for i, n in enumerate(self.class_names):
+            box = self.class_names_to_boxes[n]
+            points = box.corners().T
+            if class_idx_as_key:
+                result[i] = points
+            else:
+                result[n] = points
+        return result
 
     def get_num_rotation_parameters(self):
         """
-       Returns the number of rotation parameters. For axis angle representation there are 3 parameters used
+        Returns the number of rotation parameters. For axis angle representation there are 3 parameters used
 
         """
         return self.rotation_parameter
 
     def get_models_3d_points_dict(self, class_idx_as_key=True):
         """
-       Returns either the 3d model points dict with class idx as key or the model name as key
+        Returns either the 3d model points dict with class idx as key or the model name as key
         Args:
             class_idx_as_key: Boolean indicating wheter to return the class indices or the class names as keys
         Returns:
             Dictionary containing the class indices or the class names as keys and the 3D model points as values
 
         """
-        # TODO
         return self.get_bbox_3d_dict(class_idx_as_key)
-
 
     def get_objects_diameter_dict(self, class_idx_as_key=True):
         """
-       Returns either the diameter dict with class idx as key or the model name as key
+        Returns dict mapping classes to diameters
         Args:
-            class_idx_as_key: Boolean indicating wheter to return the class indices or the class names as keys
+            class_idx_as_key: boolean
+                use class indices as keys (otherwise, use class names as keys)
         Returns:
-            Dictionary containing the class indices or the class names as keys and the 3D model diameters as values
-
+            dict of <int or str>: float
+            diameter is computed as diagonal length on xy plane (why not?)
         """
-        # TODO
-        return defaultdict(lambda: 1.0)
-
+        result = {}
+        for k, box in self.class_names_to_boxes.items():
+            corners = box.bottom_corners()
+            distance = np.linalg.norm(corners[0] - corners[2])
+            key = self.name_to_class[k] if class_idx_as_key else k
+            result[key] = distance
+        return result
 
     @property
     def class_names(self):
