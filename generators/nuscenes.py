@@ -345,7 +345,7 @@ class NuScenesGenerator(Generator):
         vehicle.truck               n=88519, width= 2.51±0.45, len= 6.93±2.17, height= 2.84±0.84, lw_aspect= 2.75±0.56
         """
 
-        return True
+        return False
 
     def get_2d_bbox(self, box, camera):
         """
