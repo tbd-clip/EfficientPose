@@ -318,19 +318,23 @@ class NuScenesGenerator(Generator):
         Returns:
             Boolean indicating whether the object is symmetric or not
         """
-        # TODO
+        # TODO - consider movable_object.trafficcone and movable_object.debris as symmetric?
         """
         animal                      n=  787, width= 0.37±0.13, len= 0.86±0.36, height= 0.60±0.20, lw_aspect= 2.35±0.69
         human.pedestrian.adult      n=208240, width= 0.67±0.13, len= 0.73±0.19, height= 1.77±0.18, lw_aspect= 1.11±0.26
         human.pedestrian.child      n= 2066, width= 0.51±0.14, len= 0.53±0.15, height= 1.38±0.25, lw_aspect= 1.05±0.23
-        human.pedestrian.constructi n= 9161, width= 0.72±0.20, len= 0.71±0.20, height= 1.74±0.30, lw_aspect= 1.02±0.29
-        human.pedestrian.personal_m n=  395, width= 0.62±0.12, len= 1.18±0.31, height= 1.71±0.27, lw_aspect= 1.98±0.64
-        human.pedestrian.police_off n=  727, width= 0.73±0.14, len= 0.69±0.13, height= 1.83±0.14, lw_aspect= 0.97±0.18
+        human.pedestrian.construction_worker
+                                    n= 9161, width= 0.72±0.20, len= 0.71±0.20, height= 1.74±0.30, lw_aspect= 1.02±0.29
+        human.pedestrian.personal_mobility
+                                    n=  395, width= 0.62±0.12, len= 1.18±0.31, height= 1.71±0.27, lw_aspect= 1.98±0.64
+        human.pedestrian.police_officer
+                                    n=  727, width= 0.73±0.14, len= 0.69±0.13, height= 1.83±0.14, lw_aspect= 0.97±0.18
         human.pedestrian.stroller   n= 1072, width= 0.63±0.13, len= 0.95±0.27, height= 1.17±0.15, lw_aspect= 1.58±0.68
         human.pedestrian.wheelchair n=  503, width= 0.77±0.10, len= 1.09±0.23, height= 1.37±0.09, lw_aspect= 1.42±0.23
         movable_object.barrier      n=152087, width= 2.53±0.64, len= 0.50±0.17, height= 0.98±0.15, lw_aspect= 0.21±0.14
         movable_object.debris       n= 3016, width= 1.01±0.67, len= 1.08±1.17, height= 1.26±0.46, lw_aspect= 1.09±0.72
-        movable_object.pushable_pul n=24605, width= 0.60±0.27, len= 0.67±0.44, height= 1.06±0.27, lw_aspect= 1.11±0.30
+        movable_object.pushable_pullable
+                                    n=24605, width= 0.60±0.27, len= 0.67±0.44, height= 1.06±0.27, lw_aspect= 1.11±0.30
         movable_object.trafficcone  n=97959, width= 0.41±0.13, len= 0.41±0.14, height= 1.07±0.27, lw_aspect= 1.03±0.24
         static_object.bicycle_rack  n= 2713, width= 6.79±5.55, len= 4.69±4.81, height= 1.32±0.26, lw_aspect= 2.03±2.74
         vehicle.bicycle             n=11859, width= 0.60±0.16, len= 1.70±0.26, height= 1.28±0.34, lw_aspect= 3.03±0.83
