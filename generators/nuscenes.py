@@ -28,7 +28,7 @@ class NuScenesGenerator(Generator):
                  dataset_base_path,
                  image_extension=".png",
                  shuffle_dataset=True,
-                 symmetric_objects={"glue", 11, "eggbox", 10}, #set with names and indices of symmetric objects
+                 symmetric_objects=None,
                  **kwargs):
         """
         Initializes a NuScenes generator
@@ -57,7 +57,8 @@ class NuScenesGenerator(Generator):
         self.image_extension = image_extension
         self.shuffle_dataset = shuffle_dataset
         self.translation_parameter = 3
-        self.symmetric_objects = symmetric_objects
+        # set with names and indices of symmetric objects
+        self.symmetric_objects = set()
 
         self._all_image_tokens = [
             sample['data'][sensor]
