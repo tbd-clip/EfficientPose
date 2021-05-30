@@ -69,7 +69,7 @@ class OcclusionGenerator1(Generator):
         self.object_id = 2 #hardcored for occlusion
         
         #set the class and name dict for mapping each other
-        self.class_to_name = {0: "ape", 1: "can", 2: "cat", 3: "driller", 4: "duck", 5: "eggbox", 6: "glue", 7: "holepuncher"}
+        self.class_to_name = {0: "ape", 1: "can", 2: "cat", 3: "driller", 4: "duck", 5: "holepuncher"}
         self.name_to_class = {val: key for key, val in self.class_to_name.items()}
         self.object_ids_to_class_labels, self.class_labels_to_object_ids = self.map_object_ids_to_class_labels(self.object_ids, self.name_to_class)
         self.name_to_mask_value = {"ape": 21,
@@ -77,8 +77,6 @@ class OcclusionGenerator1(Generator):
                                    "cat": 128,
                                    "driller": 170,
                                    "duck": 191,
-                                   "eggbox": 213,
-                                   "glue": 234,
                                    "holepuncher": 255}
         
         #check and set the rotation representation and the number of parameters to use
