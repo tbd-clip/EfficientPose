@@ -43,10 +43,10 @@ class OcclusionGenerator1(Generator):
     """
     def __init__(self,
                  dataset_base_path,
-                 object_ids = {"ape": 1, "can": 5, "cat": 6, "driller": 8, "duck": 9, "eggbox": 10, "glue": 11, "holepuncher": 12}, #dictionary with the names and object ids of the occlusion dataset
+                 object_ids = {"ape": 1, "can": 5, "cat": 6, "driller": 8, "duck": 9, "holepuncher": 12}, #dictionary with the names and object ids of the occlusion dataset
                  image_extension = ".png",
                  shuffle_dataset = True,
-                  symmetric_objects = {"glue", 11, "eggbox", 10}, #set with names and indices of symmetric objects
+                  symmetric_objects = {}, #set with names and indices of symmetric objects
                  **kwargs):
         """
         Initializes a Occlusion generator
