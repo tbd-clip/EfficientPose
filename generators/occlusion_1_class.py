@@ -153,8 +153,6 @@ class OcclusionGenerator1(Generator):
         name_to_model_3d_diameters = dict()
         
         for object_id, class_label in object_ids_to_class_labels.items():
-            print("object_id: ", object_id)
-            print("all_models_dict: ", all_models_dict)
             class_to_model_3d_diameters[class_label] = all_models_dict[object_id]["diameter"]
             name_to_model_3d_diameters[class_to_name[class_label]] = all_models_dict[object_id]["diameter"]
             
