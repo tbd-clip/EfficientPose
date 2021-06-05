@@ -96,8 +96,6 @@ class OcclusionGenerator1(Generator):
             print("\n\nError: The path {} containing the information about the valid annotations of the objects in the occlusion dataset was not found! please download and copy it in this dir {}".format(self.valid_annotations_path, self.object_path))
             return None
         
-        self.class_to_valid_examples, self.name_to_valid_examples = self.parse_valid_examples(self.valid_annotations_path, self.name_to_class)
-        
         #get all train or test data examples from the dataset in the given split
         if not "train" in kwargs or kwargs["train"]:
             self.data_file = os.path.join(self.object_path, "train.txt")
@@ -121,7 +119,7 @@ class OcclusionGenerator1(Generator):
         self.class_to_model_3d_points, self.name_to_model_3d_points = self.load_model_3d_points(self.model_path, self.object_ids, self.name_to_class)
         
         #get the final input and annotation infos for the base generator
-        self.image_paths, self.depth_paths, self.annotations, self.infos = self.prepare_dataset(self.object_path, self.data_examples, self.gt_dict, self.info_dict, self.class_to_valid_examples)
+        self.image_paths, self.depth_paths, self.annotations, self.infos = self.prepare_dataset(self.object_path, self.data_examples, self.gt_dict, self.info_dict)
         
         #shuffle dataset
         if self.shuffle_dataset:
@@ -206,40 +204,8 @@ class OcclusionGenerator1(Generator):
         
         example_id = int(lines[-1])
         
-        return example_id
-        
-        
-    def parse_valid_examples(self, valid_annotations_path, name_to_class_dict):
-        """
-        Reads and parses all files containing the valid poses of all object subdirs in the given valid annotations path
-        Args:
-            valid_annotations_path: Path to the subdir containing all valid example ids for all object
-            name_to_class_dict: Dictionary mapping the Occlusion object name to the EfficientPose class label
-        Returns:
-            class_to_valid_examples: Dictionary mapping the object class to a tuple of all valid data examples of this object.
-                                    In Occlusion there are usually all objects annotated even if they are not visible at all.
-                                    So filter those annotations out.
-            name_to_valid_examples: The same as class_to_valid_examples but with the class names as keys
-        """
-        #init dicts with None
-        class_to_valid_examples = {value: None for value in name_to_class_dict.values()}
-        name_to_valid_examples = {key: None for key in name_to_class_dict.keys()}
-        
-        for object_name in name_to_valid_examples.keys():
-            object_path = os.path.join(valid_annotations_path, object_name)
-            if not self.check_path(object_path):
-                return None, None #make sure to crash to avoid missing object annotations in training/testing
-            
-            txt_files = [os.path.join(object_path, filename) for filename in os.listdir(object_path) if ".txt" in filename]
-            valid_object_ids = tuple()
-            for txt_file in txt_files:
-                valid_object_ids += (self.parse_valid_example_id(txt_file), )
-                
-            name_to_valid_examples[object_name] = valid_object_ids
-            class_to_valid_examples[name_to_class_dict[object_name]] = valid_object_ids
-            
-        return class_to_valid_examples, name_to_valid_examples
-        
+        return example_id   
+   
         
     def load_model_3d_points(self, all_models_path, name_to_object_id, name_to_class):
         """
@@ -407,7 +373,7 @@ class OcclusionGenerator1(Generator):
         return points_3d
         
     
-    def prepare_dataset(self, object_path, data_examples, gt_dict, info_dict, class_to_valid_examples):
+    def prepare_dataset(self, object_path, data_examples, gt_dict, info_dict):
         """
        Prepares the Occlusion dataset and converts the data from the Linemod format to the EfficientPose format
         Args:
@@ -415,9 +381,7 @@ class OcclusionGenerator1(Generator):
             data_examples: List containing all data examples of the used dataset split (train or test)
             gt_dict: Dictionary mapping the example id's to the corresponding ground truth data
             info_dict: Dictionary mapping the example id's to the intrinsic camera parameters
-            class_to_valid_examples: Dictionary mapping the object class to a tuple of all valid data examples of this object.
-                                    In Occlusion there are usually all objects annotated even if they are not visible at all.
-                                    So filter those annotations out.
+         
         Returns:
             image_paths: List with all rgb image paths in the dataset split
             depth_paths: List with all depth image paths in the dataset split (Currently not used in EfficientPose)
@@ -436,7 +400,7 @@ class OcclusionGenerator1(Generator):
         example_ids = [int(filename.split(".")[0]) for filename in all_filenames]
         filtered_gt_lists = [(gt_dict[key], key) for key in example_ids]#creates a list containing tuples of the example id and list of all annotations per image. usually one element but at object id 2 is also the occlusion dataset included
         #filer out invalid annotations and annotations from objects not included in the occlusion dataset
-        filtered_gts = [[anno for anno in gt_list if anno["obj_id"] in self.object_ids.values() and example_id in class_to_valid_examples[self.object_ids_to_class_labels[anno["obj_id"]]]] for gt_list, example_id in filtered_gt_lists]
+        filtered_gts = [[anno for anno in gt_list if anno["obj_id"] in self.object_ids.values() for gt_list, example_id in filtered_gt_lists]
                 
         filtered_infos = [info_dict[key] for key in example_ids] #filter info dicts containing camera calibration etc analogue to gts
         
