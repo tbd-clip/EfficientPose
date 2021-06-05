@@ -303,12 +303,11 @@ class Generator(keras.utils.Sequence):
         return image_group, annotations_group
     
     
-    def random_transform_group(self, image_group, annotations_group, mask_group, camera_matrix_group):
+    def random_transform_group(self, image_group, annotations_group, camera_matrix_group):
         """ Randomly transforms each image and its annotations.
         Args:
             image_group: List with images of a group/batch
             annotations_group: List with annotations of a group/batch
-            mask_group: List with segmentation masks of a group/batch
             camera_matrix_group: List with intrinsic camera parameters of a group/batch
         Returns:
             image_group: List with the transformed/augmented images of a group/batch
@@ -319,17 +318,16 @@ class Generator(keras.utils.Sequence):
 
         for index in range(len(image_group)):
             # transform a single group entry
-            image_group[index], annotations_group[index] = self.random_transform_group_entry(image_group[index], annotations_group[index], mask_group[index], camera_matrix_group[index])
+            image_group[index], annotations_group[index] = self.random_transform_group_entry(image_group[index], annotations_group[index], camera_matrix_group[index])
 
         return image_group, annotations_group
     
     
-    def random_transform_group_entry(self, image, annotations, mask, camera_matrix, transform = None):
+    def random_transform_group_entry(self, image, annotations, camera_matrix, transform = None):
         """ Randomly transforms image and annotation.
         Args:
             image: The image to transform/augment
             annotations: The annotations to transform/augment
-            mask: The mask to transform/augment
             camera_matrix: The camera matrix of the example
         Returns:
             image: The transformed/augmented image
@@ -350,17 +348,16 @@ class Generator(keras.utils.Sequence):
                 image = np.squeeze(image)[:, :, ::-1]
                 
             if self.use_6DoF_augmentation:
-                image, annotations = self.augment_6DoF_image_and_annotations(image, annotations, mask, camera_matrix)
+                image, annotations = self.augment_6DoF_image_and_annotations(image, annotations, camera_matrix)
 
         return image, annotations
     
     
-    def augment_6DoF_image_and_annotations(self, img, annotations, mask, camera_matrix):
+    def augment_6DoF_image_and_annotations(self, img, annotations, camera_matrix):
         """ Randomly transforms image and annotation using 6D augmentation.
         Args:
             img: The image to augment
             annotations: The annotations to augment
-            mask: The segmentation mask of the image
             camera_matrix: The camera matrix of the example
         Returns:
             augmented_img: The transformed/augmented image
@@ -369,11 +366,9 @@ class Generator(keras.utils.Sequence):
         num_annos = annotations["rotations"].shape[0]
         rotation_matrix_annos = np.zeros((num_annos, 3, 3), dtype = np.float32)
         translation_vector_annos = np.zeros((num_annos, 3), dtype = np.float32)
-        mask_values = np.zeros((num_annos,), dtype = np.uint8)
         for i in range(num_annos):
             rotation_matrix_annos[i, :, :] = self.axis_angle_to_rotation_mat(annotations["rotations"][i, :3])
             translation_vector_annos[i, :] = annotations["translations"][i, :]
-            mask_values[i] = self.name_to_mask_value[self.class_to_name[annotations["labels"][i]]]
         
         #generate random scale and angle
         scale_range, min_scale = self.get_scale_6DoF_augmentation_parameter()
@@ -381,7 +376,6 @@ class Generator(keras.utils.Sequence):
         angle = random.random() * 360
         
         augmented_img, augmented_rotation_vector, augmented_translation_vector, augmented_bbox, still_valid_annos, is_valid_augmentation = self.augmentation_6DoF(img = img,
-                                                                                                                                                mask = mask,
                                                                                                                                                 rotation_matrix_annos = rotation_matrix_annos,
                                                                                                                                                 translation_vector_annos = translation_vector_annos,
                                                                                                                                                 angle = angle,
@@ -390,7 +384,7 @@ class Generator(keras.utils.Sequence):
                                                                                                                                                 mask_values = mask_values)
         if is_valid_augmentation:
             for i in range(num_annos):
-                annotations["bboxes"][i, :] = augmented_bbox[i, :]
+                #annotations["bboxes"][i, :] = augmented_bbox[i, :]
                 annotations["rotations"][i, :3] = augmented_rotation_vector[i, :]
                 annotations["translations"][i, :] = augmented_translation_vector[i, :]
                 annotations["translations_x_y_2D"][i, :] = self.project_points_3D_to_2D(points_3D = np.zeros(shape = (1, 3)), #transform the object coordinate system origin point which is the centerpoint
@@ -415,11 +409,10 @@ class Generator(keras.utils.Sequence):
         return augmented_img, annotations
     
     
-    def augmentation_6DoF(self, img, mask, rotation_matrix_annos, translation_vector_annos, angle, scale, camera_matrix, mask_values):
+    def augmentation_6DoF(self, img, rotation_matrix_annos, translation_vector_annos, angle, scale, camera_matrix, mask_values):
         """ Computes the 6D augmentation.
         Args:
             img: The image to augment
-            mask: The segmentation mask of the image
             rotation_matrix_annos: numpy array with shape (num_annotations, 3, 3) which contains the ground truth rotation matrix for each annotated object in the image
             translation_vector_annos: numpy array with shape (num_annotations, 3) which contains the ground truth translation vectors for each annotated object in the image
             angle: rotate the image with the given angle
