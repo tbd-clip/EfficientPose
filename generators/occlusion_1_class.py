@@ -143,7 +143,7 @@ class OcclusionGenerator1(Generator):
         """
         print("object_ids_dict: ", object_ids_dict)
         print("name_to_class_dict: ", name_to_class_dict)
-        exit()
+        #exit()
         object_ids_to_class_labels = {object_id: name_to_class_dict[object_name] for object_name, object_id in object_ids_dict.items()}
         class_labels_to_object_ids = {class_label: object_id for object_id, class_label in object_ids_to_class_labels.items()}
         return object_ids_to_class_labels, class_labels_to_object_ids
