@@ -395,12 +395,23 @@ class OcclusionGenerator1(Generator):
         all_filenames = [filename for filename in os.listdir(all_images_path) if self.image_extension in filename and filename.replace(self.image_extension, "") in data_examples]
         image_paths = [os.path.join(all_images_path, filename) for filename in all_filenames]
         depth_paths = [img_path.replace("rgb", "depth") for img_path in image_paths]
-        
+                 
         #parse the example ids for the gt dict from filenames
         example_ids = [int(filename.split(".")[0]) for filename in all_filenames]
-        filtered_gt_lists = [(gt_dict[key], key) for key in example_ids]#creates a list containing tuples of the example id and list of all annotations per image. usually one element but at object id 2 is also the occlusion dataset included
-        #filer out invalid annotations and annotations from objects not included in the occlusion dataset
-        filtered_gts = [[anno for anno in gt_list if anno["obj_id"] in self.object_ids.values() for gt_list, example_id in filtered_gt_lists]
+        filtered_gt_lists = [gt_dict[key] for key in example_ids]#creates a list containing lists of all annotations per image. usually one element but at object id 2 is also the occlusion dataset included
+        filtered_gts = []
+        for gt_list in filtered_gt_lists:
+            #search all annotations with the given object id
+            all_annos = [anno for anno in gt_list if anno["obj_id"] == self.object_id]
+            if len(all_annos) <= 0:
+                print("\nError: No annotation found!")
+                filtered_gts.append(None)
+            elif len(all_annos) > 1:
+                print("\nWarning: found more than one annotation. using only the first annotation")
+                filtered_gts.append(all_annos[0])
+            else:
+                filtered_gts.append(all_annos[0])    
+                    
                 
         filtered_infos = [info_dict[key] for key in example_ids] #filter info dicts containing camera calibration etc analogue to gts
         
