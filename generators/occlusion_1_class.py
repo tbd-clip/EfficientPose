@@ -497,7 +497,7 @@ class OcclusionGenerator1(Generator):
                 #print(annotations["labels"][i])
                 
                 annotations["bboxes"][i, :] = gt["obj_bb"]
-                annotations["bcube"][i, :] = gt["bcube"]
+                annotations["bcube"][i, :] = np.array(gt["bcube"]).flatten()
                 
                 #transform rotation into the needed representation
                 annotations["rotations"][i, :-2] = self.transform_rotation(np.array(gt["cam_R_m2c"]), self.rotation_representation)
