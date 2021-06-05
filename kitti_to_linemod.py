@@ -124,7 +124,7 @@ with open(INFO_FILE, "w") as yml:
         # The calibration files all seem very similar. Seems to be same cam + lense.
         # Download from: http://www.cvlibs.net/datasets/kitti/raw_data.php
         # Format: https://github.com/yanii/kitti-pcl/blob/master/KITTI_README.TXT
-        yml.write("  cam_K: [9.842439e+02 0.000000e+00 6.900000e+02 0.000000e+00 9.808141e+02 2.331966e+02 0.000000e+00 0.000000e+00 1.000000e+00]\n")
+        yml.write("  cam_K: [9.842439e+02, 0.000000e+00, 6.900000e+02, 0.000000e+00, 9.808141e+02, 2.331966e+02, 0.000000e+00, 0.000000e+00, 1.000000e+00]\n")
         yml.write("  depth_scale: 1.0\n")
 
 '''
