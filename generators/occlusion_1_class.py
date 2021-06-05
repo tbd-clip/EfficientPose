@@ -43,10 +43,10 @@ class OcclusionGenerator1(Generator):
     """
     def __init__(self,
                  dataset_base_path,
-                 object_ids = {"ape": 1, "can": 5, "cat": 6, "driller": 8, "duck": 9, "eggbox": 10, "glue": 11, "holepuncher": 12}, #dictionary with the names and object ids of the occlusion dataset
+                 object_ids = {"car": 0, "cyclist": 1, "person": 2}, #dictionary with the names and object ids of the occlusion dataset
                  image_extension = ".png",
                  shuffle_dataset = True,
-                  symmetric_objects = {"glue", 11, "eggbox", 10}, #set with names and indices of symmetric objects
+                  symmetric_objects = {}, #set with names and indices of symmetric objects
                  **kwargs):
         """
         Initializes a Occlusion generator
@@ -66,20 +66,12 @@ class OcclusionGenerator1(Generator):
         self.translation_parameter = 3
         self.symmetric_objects = symmetric_objects
         self.object_ids = object_ids
-        self.object_id = 2 #hardcored for occlusion
+        self.object_id = 2 #hardcored for occlusion & kitti
         
         #set the class and name dict for mapping each other
-        self.class_to_name = {0: "ape", 1: "can", 2: "cat", 3: "driller", 4: "duck", 5: "eggbox", 6: "glue", 7: "holepuncher"}
+        self.class_to_name = {"car": 0, "cyclist": 1, "person": 2}
         self.name_to_class = {val: key for key, val in self.class_to_name.items()}
         self.object_ids_to_class_labels, self.class_labels_to_object_ids = self.map_object_ids_to_class_labels(self.object_ids, self.name_to_class)
-        self.name_to_mask_value = {"ape": 21,
-                                   "can": 106,
-                                   "cat": 128,
-                                   "driller": 170,
-                                   "duck": 191,
-                                   "eggbox": 213,
-                                   "glue": 234,
-                                   "holepuncher": 255}
         
         #check and set the rotation representation and the number of parameters to use
         self.init_num_rotation_parameters(**kwargs)
@@ -117,7 +109,7 @@ class OcclusionGenerator1(Generator):
         #parse yaml files with ground truth annotations and infos about camera intrinsics and 3D BBox
         self.gt_dict = self.parse_yaml(self.object_path)
         self.info_dict = self.parse_yaml(self.object_path, filename = "info.yml")
-        self.all_models_dict = self.parse_yaml(self.model_path, filename = "models_info.yml")
+        self.all_models_dict = self.parse_yaml(self.object_path, filename = "models_info.yml")
         
         #create dict with the class indices/names as keys and 3d model diameters as values
         self.class_to_model_3d_diameters, self.name_to_model_3d_diameters = self.create_model_3d_diameters_dict(self.all_models_dict, self.object_ids_to_class_labels, self.class_to_name)
@@ -129,11 +121,11 @@ class OcclusionGenerator1(Generator):
         self.class_to_model_3d_points, self.name_to_model_3d_points = self.load_model_3d_points(self.model_path, self.object_ids, self.name_to_class)
         
         #get the final input and annotation infos for the base generator
-        self.image_paths, self.mask_paths, self.depth_paths, self.annotations, self.infos = self.prepare_dataset(self.object_path, self.data_examples, self.gt_dict, self.info_dict, self.class_to_valid_examples)
+        self.image_paths, self.depth_paths, self.annotations, self.infos = self.prepare_dataset(self.object_path, self.data_examples, self.gt_dict, self.info_dict, self.class_to_valid_examples)
         
         #shuffle dataset
         if self.shuffle_dataset:
-            self.image_paths, self.mask_paths, self.depth_paths, self.annotations, self.infos = self.shuffle_sequences(self.image_paths, self.mask_paths, self.depth_paths, self.annotations, self.infos)
+            self.image_paths, self.depth_paths, self.annotations, self.infos = self.shuffle_sequences(self.image_paths, self.depth_paths, self.annotations, self.infos)
         
         #init base class
         Generator.__init__(self, **kwargs)
@@ -383,16 +375,16 @@ class OcclusionGenerator1(Generator):
         return self.translation_parameter
             
         
-    def shuffle_sequences(self, image_paths, mask_paths, depth_paths, annotations, infos):
+    def shuffle_sequences(self, image_paths, depth_paths, annotations, infos):
         """
        Takes sequences (e.g. lists) containing the dataset and shuffle them so that the corresponding entries still match
     
         """
-        concatenated = list(zip(image_paths, mask_paths, depth_paths, annotations, infos))
+        concatenated = list(zip(image_paths, depth_paths, annotations, infos))
         random.shuffle(concatenated)
-        image_paths, mask_paths, depth_paths, annotations, infos = zip(*concatenated)
+        image_paths, depth_paths, annotations, infos = zip(*concatenated)
         
-        return image_paths, mask_paths, depth_paths, annotations, infos
+        return image_paths, depth_paths, annotations, infos
     
     
     def load_model_ply(self, path_to_ply_file):
@@ -425,7 +417,6 @@ class OcclusionGenerator1(Generator):
                                     So filter those annotations out.
         Returns:
             image_paths: List with all rgb image paths in the dataset split
-            mask_paths: List with all segmentation mask paths in the dataset split
             depth_paths: List with all depth image paths in the dataset split (Currently not used in EfficientPose)
             annotations: List with all annotation dictionaries in the dataset split
             infos: List with all info dictionaries (intrinsic camera parameters) in the dataset split
@@ -436,7 +427,6 @@ class OcclusionGenerator1(Generator):
         #load all images which are in the dataset split (train/test)
         all_filenames = [filename for filename in os.listdir(all_images_path) if self.image_extension in filename and filename.replace(self.image_extension, "") in data_examples]
         image_paths = [os.path.join(all_images_path, filename) for filename in all_filenames]
-        mask_paths = [img_path.replace("rgb", "merged_masks") for img_path in image_paths] #this dir is generated from generate_masks.py script in occlusion_labels and needs also to be copied into the subdir
         depth_paths = [img_path.replace("rgb", "depth") for img_path in image_paths]
         
         #parse the example ids for the gt dict from filenames
@@ -451,7 +441,7 @@ class OcclusionGenerator1(Generator):
         infos = self.insert_np_cam_calibration(filtered_infos)
         
         #convert the gt into the base generator format
-        annotations = self.convert_gt(filtered_gts, infos, mask_paths)
+        annotations = self.convert_gt(filtered_gts, infos)
         
         # max_angle = max(annotations, key = lambda dic: np.max(dic["rotations"]))
         # min_angle = min(annotations, key = lambda dic: np.min(dic["rotations"]))
@@ -461,7 +451,7 @@ class OcclusionGenerator1(Generator):
         # min_t = min(annotations, key = lambda dic: np.min(dic["translations"]))
         # print("\n\n\nmax translation: ", max_t, "\nmin translation: ", min_t, "\n\n")
         
-        return image_paths, mask_paths, depth_paths, annotations, infos
+        return image_paths, depth_paths, annotations, infos
     
     
     def insert_np_cam_calibration(self, filtered_infos):
@@ -479,19 +469,18 @@ class OcclusionGenerator1(Generator):
         return filtered_infos
     
     
-    def convert_gt(self, gt_list, info_list, mask_paths):
+    def convert_gt(self, gt_list, info_list):
         """
        Prepares the annotations from the Linemod dataset format into the EfficientPose format
         Args:
             gt_list: List with all ground truth dictionaries in the dataset split
             info_list: List with all info dictionaries (intrinsic camera parameters) in the dataset split
-            mask_paths: List with all segmentation mask paths in the dataset split
         Returns:
             all_annotations: List with the converted ground truth dictionaries
     
         """
         all_annotations = []
-        for single_gt_list, info, mask_path in zip(gt_list, info_list, mask_paths):
+        for single_gt_list, info in zip(gt_list, info_list):
             num_annos = len(single_gt_list)
             #init annotations in the correct base format.
             num_all_rotation_parameters = self.rotation_parameter + 2 #+1 for class id and +1 for is_symmetric flag
@@ -500,8 +489,6 @@ class OcclusionGenerator1(Generator):
                            'rotations': np.zeros((num_annos, num_all_rotation_parameters)),
                            'translations': np.zeros((num_annos, self.translation_parameter)),
                            'translations_x_y_2D': np.zeros((num_annos, 2))}
-            
-            mask = cv2.imread(mask_path)
 
             for i, gt in enumerate(single_gt_list):
                 #fill in the values
@@ -509,12 +496,9 @@ class OcclusionGenerator1(Generator):
                 annotations["labels"][i] = self.object_ids_to_class_labels[gt["obj_id"]]
                 #print(annotations["labels"][i])
                 
-                #get bbox from mask
-                annotations["bboxes"][i, :], found_object = self.get_bbox_from_mask(mask, mask_value = self.name_to_mask_value[self.class_to_name[self.object_ids_to_class_labels[gt["obj_id"]]]])
-                if not found_object:
-                    print("\nWarning: Did not find object in mask!")
-                    # print(mask_path)
-                    # print(gt["obj_id"])
+                annotations["bboxes"][i, :] = gt["obj_bb"]
+                annotations["bcube"][i, :] = gt["bcube"]
+                
                 #transform rotation into the needed representation
                 annotations["rotations"][i, :-2] = self.transform_rotation(np.array(gt["cam_R_m2c"]), self.rotation_representation)
                 annotations["rotations"][i, -2] = float(self.is_symmetric_object(gt["obj_id"]))
@@ -644,11 +628,6 @@ class OcclusionGenerator1(Generator):
         image = cv2.imread(self.image_paths[image_index])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
-    
-    def load_mask(self, image_index):
-        """ Load mask at the image_index.
-        """
-        return cv2.imread(self.mask_paths[image_index])
 
     def load_annotations(self, image_index):
         """ Load annotations for an image_index.
