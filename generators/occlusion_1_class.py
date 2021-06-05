@@ -449,6 +449,7 @@ class OcclusionGenerator1(Generator):
             num_all_rotation_parameters = self.rotation_parameter + 2 #+1 for class id and +1 for is_symmetric flag
             annotations = {'labels': np.zeros((num_annos,)),
                            'bboxes': np.zeros((num_annos, 4)),
+                           'bcube': np.zeros((num_annos, 24)), # 8 * 3D points, cube vertices
                            'rotations': np.zeros((num_annos, num_all_rotation_parameters)),
                            'translations': np.zeros((num_annos, self.translation_parameter)),
                            'translations_x_y_2D': np.zeros((num_annos, 2))}
