@@ -89,13 +89,7 @@ class OcclusionGenerator1(Generator):
         
         #get path containing the data for the given object
         self.object_path = self.object_paths_and_ids[self.object_id]
-        
-        #get path containing infos about the valid examples. valid_poses subfolder needs to be copied manually in this dir
-        self.valid_annotations_path = os.path.join(self.object_path, "valid_poses")
-        if not self.check_path(self.valid_annotations_path):
-            print("\n\nError: The path {} containing the information about the valid annotations of the objects in the occlusion dataset was not found! please download and copy it in this dir {}".format(self.valid_annotations_path, self.object_path))
-            return None
-        
+                
         #get all train or test data examples from the dataset in the given split
         if not "train" in kwargs or kwargs["train"]:
             self.data_file = os.path.join(self.object_path, "train.txt")
