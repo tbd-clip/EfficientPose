@@ -423,7 +423,9 @@ class OcclusionGenerator1(Generator):
     
         """
         for info in filtered_infos:
-            hard_coded_test = [9.842439e+02 0.000000e+00 6.900000e+02 0.000000e+00 9.808141e+02 2.331966e+02 0.000000e+00 0.000000e+00 1.000000e+00]
+            # old way below should work, I'm just too lazy to re-run the conversion script
+            hard_coded_test = [9.842439e+02, 0.000000e+00, 6.900000e+02, 0.000000e+00, 9.808141e+02, 
+                               2.331966e+02, 0.000000e+00, 0.000000e+00, 1.000000e+00]
             info["cam_K_np"] = np.reshape(np.array(hard_coded_test), newshape = (3, 3))
             #info["cam_K_np"] = np.reshape(np.array(info["cam_K"]), newshape = (3, 3))
         
