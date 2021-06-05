@@ -35,7 +35,7 @@ from plyfile import PlyData
 from generators.common import Generator
 
 
-#Generator for the Occlusion Dataset (Linemod because Occlusion is a subset of linemod) downloaded from here: https://github.com/j96w/DenseFusion and the valid poses from here https://github.com/chensong1995/HybridPose
+#Generator for the Occlusion Dataset (Linemod because Occlusion is a subset of linemod) downloaded from here: https://github.com/j96w/DenseFusion
 class OcclusionGenerator1(Generator):
     """
     Generator for the Occlusion dataset
