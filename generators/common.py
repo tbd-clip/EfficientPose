@@ -435,6 +435,9 @@ class Generator(keras.utils.Sequence):
         rot_2d_mat = cv2.getRotationMatrix2D((cx, cy), -angle, scale)
         augmented_img = cv2.warpAffine(img, rot_2d_mat, (width, height))
         #append the affine transformation also to the mask to extract the augmented bbox afterwards
+        print("rot_2d_mat: ", rot_2d_mat)
+        print("width: ", width)
+        print("height: ", height);exit()
         augmented_mask = cv2.warpAffine(mask, rot_2d_mat, (width, height), flags = cv2.INTER_NEAREST) #use nearest neighbor interpolation to keep valid mask values
         #check if complete mask is zero
         _, is_valid_augmentation = self.get_bbox_from_mask(augmented_mask)
