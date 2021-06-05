@@ -217,7 +217,8 @@ class OcclusionGenerator1(Generator):
             point_file = os.path.join(all_models_path, filename)
             
             if not os.path.isfile(point_file):
-                print("\n\nError: File {} with 3D model points for model {} does not exist!\n\n".format(point_file, model_name))
+                #print("\n\nError: File {} with 3D model points for model {} does not exist!\n\n".format(point_file, model_name))
+                print("Warning: Couldn't find ply file, but shouldn't be needed for kitti dataset.")
                 continue
             
             model_3d_points = self.load_model_ply(point_file)
