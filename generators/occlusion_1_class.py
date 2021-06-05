@@ -396,9 +396,9 @@ class OcclusionGenerator1(Generator):
             #search all annotations with the given object id
             all_annos = [anno for anno in gt_list if anno["obj_id"] == self.object_id]
             print("\n\n\n", gt_list[0]["obj_id"], self.object_id)
-            print(gt_list[1]["obj_id"], self.object_id)
-            print(gt_list[2]["obj_id"], self.object_id)
-            print(gt_list[4]["obj_id"], self.object_id)
+            if len(gt_list):
+                print(gt_list[1]["obj_id"], self.object_id)
+         
             if len(all_annos) <= 0:
                 print("\nError: No annotation found!")
                 filtered_gts.append(None)
