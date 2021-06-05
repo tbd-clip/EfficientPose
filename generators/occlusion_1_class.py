@@ -77,7 +77,7 @@ class OcclusionGenerator1(Generator):
         self.init_num_rotation_parameters(**kwargs)
         
         #check if both paths exist
-        if not self.check_path(self.dataset_base_path) or not self.check_path(self.dataset_path) or not self.check_path(self.model_path):
+        if not self.check_path(self.dataset_base_path) or not self.check_path(self.dataset_path):
             return None
         
         #get dict with object ids as keys and object subdirs as values
