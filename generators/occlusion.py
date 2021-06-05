@@ -116,7 +116,7 @@ class OcclusionGenerator(Generator):
         #parse yaml files with ground truth annotations and infos about camera intrinsics and 3D BBox
         self.gt_dict = self.parse_yaml(self.object_path)
         self.info_dict = self.parse_yaml(self.object_path, filename = "info.yml")
-        self.all_models_dict = self.parse_yaml(self.model_path, filename = "models_info.yml")
+        self.all_models_dict = self.parse_yaml(self.object_path, filename = "models_info.yml")
         
         #create dict with the class indices/names as keys and 3d model diameters as values
         self.class_to_model_3d_diameters, self.name_to_model_3d_diameters = self.create_model_3d_diameters_dict(self.all_models_dict, self.object_ids_to_class_labels, self.class_to_name)
