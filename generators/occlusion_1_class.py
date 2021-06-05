@@ -69,7 +69,7 @@ class OcclusionGenerator1(Generator):
         self.object_id = 2 #hardcored for occlusion & kitti
         
         #set the class and name dict for mapping each other
-        self.class_to_name = {"car": 0, "cyclist": 1, "person": 2}
+        self.class_to_name = {0: "car", 1: "cyclist", 2: "person"}
         self.name_to_class = {val: key for key, val in self.class_to_name.items()}
         self.object_ids_to_class_labels, self.class_labels_to_object_ids = self.map_object_ids_to_class_labels(self.object_ids, self.name_to_class)
         
