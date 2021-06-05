@@ -141,7 +141,7 @@ class OcclusionGenerator1(Generator):
             Dictionaries containing the Occlusion dataset object id as key and the EfficientPose class label as value and vice versa
     
         """
-        print("object_name: ", object_name)
+        print("object_ids_dict: ", object_ids_dict)
         print("name_to_class_dict: ", name_to_class_dict)
         exit()
         object_ids_to_class_labels = {object_id: name_to_class_dict[object_name] for object_name, object_id in object_ids_dict.items()}
