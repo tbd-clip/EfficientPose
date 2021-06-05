@@ -107,9 +107,9 @@ with open(TEST_FILE, "w") as f:
 # ^ Hence why the 3 lines are essentially repeated.
 # Human/pedestrian class should have the smallest bcube.
 with open(MODELS_INFO_FILE, 'w') as yml:
+    yml.write("0: {diameter: 3000, min_x: -1000, min_y: -1000, min_z: -1000, size_x: 2000, size_y: 2000, size_z: 2000}\n")
     yml.write("1: {diameter: 3000, min_x: -1000, min_y: -1000, min_z: -1000, size_x: 2000, size_y: 2000, size_z: 2000}\n")
     yml.write("2: {diameter: 3000, min_x: -1000, min_y: -1000, min_z: -1000, size_x: 2000, size_y: 2000, size_z: 2000}\n")
-    yml.write("3: {diameter: 3000, min_x: -1000, min_y: -1000, min_z: -1000, size_x: 2000, size_y: 2000, size_z: 2000}\n")
 
 # copy over the images
 for fn in os.listdir(KITTI_IMAGE_DIR):
