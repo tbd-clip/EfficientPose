@@ -144,7 +144,6 @@ class Generator(keras.utils.Sequence):
 
         # load images and annotations
         image_group = self.load_image_group(group)
-        mask_group       = self.load_mask_group(group)
         annotations_group = self.load_annotations_group(group)
         camera_matrix_group = self.load_camera_matrix_group(group)
 
@@ -152,7 +151,7 @@ class Generator(keras.utils.Sequence):
         image_group, annotations_group = self.filter_annotations(image_group, annotations_group, group)
 
         #randomly transform data
-        image_group, annotations_group = self.random_transform_group(image_group, annotations_group, mask_group, camera_matrix_group)
+        image_group, annotations_group = self.random_transform_group(image_group, annotations_group, camera_matrix_group)
 
         # perform preprocessing steps
         image_group, annotations_group = self.preprocess_group(image_group, annotations_group, camera_matrix_group)
