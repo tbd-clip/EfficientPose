@@ -65,7 +65,7 @@ class OcclusionGenerator(Generator):
         self.translation_parameter = 3
         self.symmetric_objects = symmetric_objects
         self.object_ids = object_ids
-        self.object_id = 2 #hardcored for occlusion
+        self.object_id = 2 #hardcored for occlusion and kitti
         
         #set the class and name dict for mapping each other
         self.class_to_name = {0: "ape", 1: "can", 2: "cat", 3: "driller", 4: "duck", 5: "eggbox", 6: "glue", 7: "holepuncher"}
