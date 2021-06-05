@@ -392,7 +392,7 @@ class OcclusionGenerator1(Generator):
         example_ids = [int(filename.split(".")[0]) for filename in all_filenames]
         filtered_gt_lists = [(gt_dict[key], key) for key in example_ids]#creates a list containing tuples of the example id and list of all annotations per image. usually one element but at object id 2 is also the occlusion dataset included
         #filer out invalid annotations and annotations from objects not included in the occlusion dataset
-        filtered_gts = [[anno for anno in gt_list if anno["obj_id"] in self.object_ids.values() for gt_list, example_id in filtered_gt_lists]
+        filtered_gts = [[anno for anno in gt_list if anno["obj_id"] in self.object_ids.values()] for gt_list, example_id in filtered_gt_lists]
                 
         filtered_infos = [info_dict[key] for key in example_ids] #filter info dicts containing camera calibration etc analogue to gts
         
