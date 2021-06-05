@@ -496,6 +496,7 @@ class OcclusionGenerator1(Generator):
             #init annotations in the correct base format.
             num_all_rotation_parameters = self.rotation_parameter + 2 #+1 for class id and +1 for is_symmetric flag
             annotations = {'labels': np.zeros((num_annos,)),
+                           'single_class_labels': np.zeros((num_annos,)),
                            'bboxes': np.zeros((num_annos, 4)),
                            'rotations': np.zeros((num_annos, num_all_rotation_parameters)),
                            'translations': np.zeros((num_annos, self.translation_parameter)),
@@ -508,7 +509,9 @@ class OcclusionGenerator1(Generator):
                 #get the class label for the occlusion object id
                 annotations["labels"][i] = self.object_ids_to_class_labels[gt["obj_id"]]
                 #print(annotations["labels"][i])
-         
+                # @TODO remove for anything outside 1 class mapping test on occlusion dataset!
+                annotations["single_class_labels"][i] = 0 
+        
                 #get bbox from mask
                 annotations["bboxes"][i, :], found_object = self.get_bbox_from_mask(mask, mask_value = self.name_to_mask_value[self.class_to_name[self.object_ids_to_class_labels[gt["obj_id"]]]])
                 if not found_object:
