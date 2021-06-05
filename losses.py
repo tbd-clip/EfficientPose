@@ -185,8 +185,9 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         regression_translation = y_pred[:, :, e:]
         regression_target_rotation = y_true[:, :, :num_rotation_parameter]
         regression_target_translation = y_true[:, :, num_rotation_parameter:-3]
-        is_symmetric = y_true[:, :, -3]
-        class_indices = y_true[:, :, -2]
+        is_symmetric = y_true[:, :, -27]
+        class_indices = y_true[:, :, -26]
+        flat_bcube = tf.cast(tf.math.round(y_true[:, :, -25:-1]))
         anchor_state      = tf.cast(tf.math.round(y_true[:, :, -1]), tf.int32)
     
         # filter out "ignore" anchors
@@ -207,8 +208,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         axis_target, angle_target = separate_axis_from_angle(regression_target_rotation)
         
         #rotate the 3d model points with target and predicted rotations        
-        #select model points according to the class indices
-        selected_model_points = tf.gather(model_3d_points, class_indices, axis = 0)
+        
         bcube_prior_points = tf.gather(bcube_priors_tensor, class_indices, axis = 0)
         #expand dims of the rotation tensors to rotate all points along the dimension via broadcasting
         axis_pred = tf.expand_dims(axis_pred, axis = 1)
@@ -220,8 +220,10 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         regression_translation = tf.expand_dims(regression_translation, axis = 1)
         regression_target_translation = tf.expand_dims(regression_target_translation, axis = 1)
         
+        gt_bcube_pre_Rt = tf.reshape(flat_bcube, tf.shape(bcube_prior_points))
+        
         transformed_points_pred = rotate(bcube_prior_points * regression_scaling, axis_pred, angle_pred) + regression_translation
-        transformed_points_target = rotate(selected_model_points, axis_target, angle_target) + regression_target_translation
+        transformed_points_target = rotate(gt_bcube_pre_Rt, axis_target, angle_target) + regression_target_translation
         
         #distinct between symmetric and asymmetric objects
         sym_indices = tf.where(keras.backend.equal(is_symmetric, 1))
