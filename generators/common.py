@@ -455,10 +455,10 @@ class Generator(keras.utils.Sequence):
             #fill in augmented annotations
             augmented_rotation_vector_annos[i, :] = np.squeeze(augmented_rotation_vector)
             augmented_translation_vector_annos[i, :] = augmented_translation_vector
-            augmented_bbox_annos[i, :] = aug_bbox
+            bbox_annos[i, :] = aug_bbox
             still_valid_annos[i] = True
         
-        return augmented_img, augmented_rotation_vector_annos, augmented_translation_vector_annos, augmented_bbox_annos, still_valid_annos, True
+        return augmented_img, augmented_rotation_vector_annos, augmented_translation_vector_annos, bbox_annos, still_valid_annos, True
     
     
     def aug_and_check_bbox(self, bbox, rot_mat, h, w):
