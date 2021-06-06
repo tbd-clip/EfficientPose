@@ -228,6 +228,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         gt_bcube_pre_Rt = tf.Print(gt_bcube_pre_Rt, [tf.shape(gt_bcube_pre_Rt)], message=" gt_bcube_pre_Rt.shape: ", summarize=-1)
         
         transformed_points_pred = rotate(bcube_prior_points * regression_scaling, axis_pred, angle_pred) + regression_translation
+        transformed_points_pred = tf.Print(transformed_points_pred, [tf.shape(transformed_points_pred)], message=" transformed_points_pred.shape: ", summarize=-1)
         transformed_points_target = rotate(gt_bcube_pre_Rt, axis_target, angle_target) + regression_target_translation
         
         #distinct between symmetric and asymmetric objects
@@ -242,6 +243,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         
         # # compute transformed point distances
         sym_distances = calc_sym_distances(sym_points_pred, sym_points_target)
+        sym_distances = tf.Print(sym_distances, [tf.shape(sym_distances)], message=" sym_distances.shape: ", summarize=-1)
         asym_distances = calc_asym_distances(asym_points_pred, asym_points_target)
 
         distances = tf.concat([sym_distances, asym_distances], axis = 0)
