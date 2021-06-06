@@ -144,8 +144,8 @@ def anchor_targets_bbox(
 
             regression_batch[index, :, :4] = bbox_transform(anchors, annotations['bboxes'][argmax_overlaps_inds, :])
                 
-            transformation_batch[index, :, :-25] = annotations['transformation_targets'][argmax_overlaps_inds, :]
-            transformation_batch[index, :, -25:-1] = annotations['bcube'][argmax_overlaps_inds, :]
+            transformation_batch[index, :, :-4] = annotations['transformation_targets'][argmax_overlaps_inds, :]
+            transformation_batch[index, :, -4:-1] = annotations['bcube'][argmax_overlaps_inds, :]
                 
         # ignore anchors outside of image
         if image.shape:
