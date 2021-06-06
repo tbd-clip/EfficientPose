@@ -169,7 +169,7 @@ with open(GT_FILE, "w") as yml:
             bb_ymin = labels_df.loc[i, "bbox_ymin"]
             bb_xmax = labels_df.loc[i, "bbox_xmax"]
             bb_ymax = labels_df.loc[i, "bbox_ymax"]
-            bbox = [bb_xmin, bb_ymin, (bb_xmax - bb_xmin), (bb_ymax - bb_ymin)]
+            bbox = [bb_xmin, bb_ymin, bb_xmax, bb_ymax]
             
             # convert from mm to m
             bcw = float(labels_df.loc[i, "dim_width"])  * 1000
