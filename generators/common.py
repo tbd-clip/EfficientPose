@@ -434,7 +434,7 @@ class Generator(keras.utils.Sequence):
         still_valid_annos = np.zeros((num_annos,), dtype = bool) #flag for the annotations if they are still in the image and usable after augmentation or not
         
         for i in range(num_annos):
-            is_valid_augmentation, aug_bbox = self.aug_and_check_bbox(aug_bbox, rot_2d_mat, height, width)
+            is_valid_augmentation, aug_bbox = self.aug_and_check_bbox(bbox_annos[i], rot_2d_mat, height, width)
             
             if not is_valid_augmentation:
                 still_valid_annos[i] = False
