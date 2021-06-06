@@ -69,7 +69,6 @@ def focal(alpha=0.25, gamma=1.5):
         """
         labels = y_true[:, :, :-1]
         #labels = tf.Print(labels, [labels], message="This is the labels: ", summarize=-1)
-        labels = tf.Print(labels, [tf.shape(label)], message=" label.shape: ", summarize=-1)
 
         # -1 for ignore, 0 for background, 1 for object
         anchor_state = y_true[:, :, -1]
@@ -179,6 +178,8 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         Returns:
             The transformation loss of y_pred w.r.t. y_true.
         """
+        y_true = tf.Print(y_true, [tf.shape(y_true)], message=" y_true.shape: ", summarize=-1)
+        
         # separate target and state
         regression_rotation = y_pred[:, :, :num_rotation_parameter]
         s = num_rotation_parameter
