@@ -69,6 +69,8 @@ def focal(alpha=0.25, gamma=1.5):
         """
         labels = y_true[:, :, :-1]
         #labels = tf.Print(labels, [labels], message="This is the labels: ", summarize=-1)
+        labels = tf.Print(labels, [tf.shape(label)], message=" label.shape: ", summarize=-1)
+
         # -1 for ignore, 0 for background, 1 for object
         anchor_state = y_true[:, :, -1]
         classification = y_pred
@@ -222,6 +224,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         regression_target_translation = tf.expand_dims(regression_target_translation, axis = 1)
         
         gt_bcube_pre_Rt = tf.reshape(_flat_bcube, tf.shape(bcube_prior_points))
+        gt_bcube_pre_Rt = tf.Print(gt_bcube_pre_Rt, [tf.shape(gt_bcube_pre_Rt)], message=" gt_bcube_pre_Rt.shape: ", summarize=-1)
         
         transformed_points_pred = rotate(bcube_prior_points * regression_scaling, axis_pred, angle_pred) + regression_translation
         transformed_points_target = rotate(gt_bcube_pre_Rt, axis_target, angle_target) + regression_target_translation
