@@ -201,17 +201,7 @@ class Generator(keras.utils.Sequence):
             List with the images of the group/batch
         """
         return [self.load_image(image_index) for image_index in group]
-    
-    
-    def load_mask_group(self, group):
-        """ Load masks for all images in a group.
-        Args:
-            group: The index of the group/batch of data in the generator
-        Returns:
-            List with the segmentation masks of the group/batch
-        """
-        return [self.load_mask(image_index) for image_index in group]
-    
+        
     
     def load_camera_matrix_group(self, group):
         """ Load intrinsic camera matrix for all images in a group.
@@ -364,11 +354,13 @@ class Generator(keras.utils.Sequence):
             annotations: The transformed/augmented annotations
         """
         num_annos = annotations["rotations"].shape[0]
+        bbox_annos = np.zeros((num_annos, 4), dtype=np.float32)
         rotation_matrix_annos = np.zeros((num_annos, 3, 3), dtype = np.float32)
         translation_vector_annos = np.zeros((num_annos, 3), dtype = np.float32)
         for i in range(num_annos):
             rotation_matrix_annos[i, :, :] = self.axis_angle_to_rotation_mat(annotations["rotations"][i, :3])
             translation_vector_annos[i, :] = annotations["translations"][i, :]
+            bbox_annos[i, :] = annotations["bbox"][i, :]
         
         #generate random scale and angle
         scale_range, min_scale = self.get_scale_6DoF_augmentation_parameter()
@@ -378,13 +370,13 @@ class Generator(keras.utils.Sequence):
         augmented_img, augmented_rotation_vector, augmented_translation_vector, augmented_bbox, still_valid_annos, is_valid_augmentation = self.augmentation_6DoF(img = img,
                                                                                                                                                 rotation_matrix_annos = rotation_matrix_annos,
                                                                                                                                                 translation_vector_annos = translation_vector_annos,
+                                                                                                                                                bbox_annos = bbox_annos,
                                                                                                                                                 angle = angle,
                                                                                                                                                 scale = scale,
-                                                                                                                                                camera_matrix = camera_matrix,
-                                                                                                                                                mask_values = mask_values)
+                                                                                                                                                camera_matrix = camera_matrix)
         if is_valid_augmentation:
             for i in range(num_annos):
-                #annotations["bboxes"][i, :] = augmented_bbox[i, :]
+                annotations["bboxes"][i, :] = augmented_bbox[i, :]
                 annotations["rotations"][i, :3] = augmented_rotation_vector[i, :]
                 annotations["translations"][i, :] = augmented_translation_vector[i, :]
                 annotations["translations_x_y_2D"][i, :] = self.project_points_3D_to_2D(points_3D = np.zeros(shape = (1, 3)), #transform the object coordinate system origin point which is the centerpoint
@@ -409,16 +401,16 @@ class Generator(keras.utils.Sequence):
         return augmented_img, annotations
     
     
-    def augmentation_6DoF(self, img, rotation_matrix_annos, translation_vector_annos, angle, scale, camera_matrix, mask_values):
+    def augmentation_6DoF(self, img, rotation_matrix_annos, translation_vector_annos, bbox_annos, angle, scale, camera_matrix):
         """ Computes the 6D augmentation.
         Args:
             img: The image to augment
             rotation_matrix_annos: numpy array with shape (num_annotations, 3, 3) which contains the ground truth rotation matrix for each annotated object in the image
             translation_vector_annos: numpy array with shape (num_annotations, 3) which contains the ground truth translation vectors for each annotated object in the image
+            bbox_annos: analog of the 2 above but the bbox coord's instead.
             angle: rotate the image with the given angle
             scale: scale the image with the given scale
             camera_matrix: The camera matrix of the example
-            mask_values: numpy array of shape (num_annotations,) containing the segmentation mask value of each annotated object
         Returns:
             augmented_img: The augmented image
             augmented_rotation_vector_annos: numpy array with shape (num_annotations, 3) which contains the augmented ground truth rotation vectors for each annotated object in the image
@@ -434,26 +426,15 @@ class Generator(keras.utils.Sequence):
         #rotate and scale image
         rot_2d_mat = cv2.getRotationMatrix2D((cx, cy), -angle, scale)
         augmented_img = cv2.warpAffine(img, rot_2d_mat, (width, height))
-        #append the affine transformation also to the mask to extract the augmented bbox afterwards
-        print("rot_2d_mat: ", rot_2d_mat)
-        print("width: ", width)
-        print("height: ", height);exit()
-        augmented_mask = cv2.warpAffine(mask, rot_2d_mat, (width, height), flags = cv2.INTER_NEAREST) #use nearest neighbor interpolation to keep valid mask values
-        #check if complete mask is zero
-        _, is_valid_augmentation = self.get_bbox_from_mask(augmented_mask)
-        if not is_valid_augmentation:
-            #skip augmentation because all objects are out of bounds
-            return None, None, None, None, None, False
-        
+              
         num_annos = rotation_matrix_annos.shape[0]
         
         augmented_rotation_vector_annos = np.zeros((num_annos, 3), dtype = np.float32)
         augmented_translation_vector_annos = np.zeros((num_annos, 3), dtype = np.float32)
-        augmented_bbox_annos = np.zeros((num_annos, 4), dtype = np.float32)
         still_valid_annos = np.zeros((num_annos,), dtype = bool) #flag for the annotations if they are still in the image and usable after augmentation or not
         
         for i in range(num_annos):
-            augmented_bbox, is_valid_augmentation = self.get_bbox_from_mask(augmented_mask, mask_value = mask_values[i])
+            is_valid_augmentation, aug_bbox = self.aug_and_check_bbox(aug_bbox, rot_2d_mat, height, width)
             
             if not is_valid_augmentation:
                 still_valid_annos[i] = False
@@ -474,10 +455,38 @@ class Generator(keras.utils.Sequence):
             #fill in augmented annotations
             augmented_rotation_vector_annos[i, :] = np.squeeze(augmented_rotation_vector)
             augmented_translation_vector_annos[i, :] = augmented_translation_vector
-            augmented_bbox_annos[i, :] = augmented_bbox
+            augmented_bbox_annos[i, :] = aug_bbox
             still_valid_annos[i] = True
         
         return augmented_img, augmented_rotation_vector_annos, augmented_translation_vector_annos, augmented_bbox_annos, still_valid_annos, True
+    
+    
+    def aug_and_check_bbox(self, bbox, rot_mat, h, w):
+        is_valid = True
+        # need to construct the 4 2D points of the bbox and rotate them
+        lt = np.array([bbox[0], bbox[1], 1])
+        rt = np.array([bbox[0]+bbox[2], bbox[1], 1])
+        rb = np.array([tl[0]+bbox[2], tl[1]+bbox[2], 1])
+        lb = np.array([tl[0], tl[1]+bbox[2], 1])
+        bb = np.array([lt, rt, rb, lb])
+        aug_bbox = rot_mat @ bb.T
+        for i, bb_corner in enumerate(aug_bbox):
+            if bb_corner[0] < 0:
+                bb_corner[0] = 0
+            elif bb_corner[0] > w:
+                bb_corner[0] = w
+            if bb_corner[1] < 0:
+                bb_corner[1] = 0
+            elif bb_corner[1] > h:
+                bb_corner[1] = h
+            aug_bbox[i] = bb_corner
+
+        # if on screen bbox's area is greater than hard-coded threshold:
+        new_area = abs(aug_bbox[0, 0] - aug_bbox[1, 0]) * abs(aug_bbox[0, 1] - aug_bbox[3, 1])
+        if new_area < 400:
+            is_valid = False
+
+        return is_valid, aug_bbox
     
     
     def get_scale_6DoF_augmentation_parameter(self):
