@@ -216,6 +216,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         #rotate the 3d model points with target and predicted rotations        
         
         bcube_prior_points = tf.gather(bcube_priors_tensor, class_indices, axis = 0)
+        bcube_prior_points = tf.Print(bcube_prior_points, [tf.shape(bcube_prior_points)], message=" bcube_prior_points.shape: ", summarize=-1)
         #expand dims of the rotation tensors to rotate all points along the dimension via broadcasting
         axis_pred = tf.expand_dims(axis_pred, axis = 1)
         angle_pred = tf.expand_dims(angle_pred, axis = 1)
