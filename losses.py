@@ -230,6 +230,8 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         transformed_points_pred = rotate(bcube_prior_points * regression_scaling, axis_pred, angle_pred) + regression_translation
         transformed_points_pred = tf.Print(transformed_points_pred, [tf.shape(transformed_points_pred)], message=" transformed_points_pred.shape: ", summarize=-1)
         transformed_points_target = rotate(gt_bcube_pre_Rt, axis_target, angle_target) + regression_target_translation
+        transformed_points_target = tf.Print(transformed_points_target, [tf.shape(transformed_points_target)], message=" transformed_points_target.shape: ", summarize=-1)
+
         
         #distinct between symmetric and asymmetric objects
         sym_indices = tf.where(keras.backend.equal(is_symmetric, 1))
