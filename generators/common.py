@@ -360,7 +360,7 @@ class Generator(keras.utils.Sequence):
         for i in range(num_annos):
             rotation_matrix_annos[i, :, :] = self.axis_angle_to_rotation_mat(annotations["rotations"][i, :3])
             translation_vector_annos[i, :] = annotations["translations"][i, :]
-            bbox_annos[i, :] = annotations["bbox"][i, :]
+            bbox_annos[i, :] = annotations["bboxes"][i, :]
         
         #generate random scale and angle
         scale_range, min_scale = self.get_scale_6DoF_augmentation_parameter()
