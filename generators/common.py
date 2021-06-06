@@ -473,14 +473,14 @@ class Generator(keras.utils.Sequence):
         if aug_bbox[0, 0] < aug_bbox[1, 0]:
             top_left_x = aug_bbox[0, 0]
             bot_right_x = aug_bbox[1, 0]
-        elif:
+        else:
             top_left_x = aug_bbox[1, 0]
             bot_right_x = aug_bbox[0, 0]
             
         if aug_bbox[0, 1] < aug_bbox[1, 1]:
             top_left_y = aug_bbox[0, 1]
             bot_right_y = aug_bbox[1, 1]
-        elif:
+        else:
             top_left_y = aug_bbox[1, 1]
             bot_right_y = aug_bbox[0, 1]
             
