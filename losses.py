@@ -199,6 +199,8 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         regression_scaling = tf.gather_nd(regression_scaling, indices)
         regression_scaling = tf.expand_dims(regression_scaling, axis = 1)
         regression_translation = tf.gather_nd(regression_translation, indices)
+        regression_translation = tf.Print(regression_translation, [tf.shape(regression_translation)], message=" regression_translation.shape: ", summarize=-1)
+
         
         regression_target_rotation = tf.gather_nd(regression_target_rotation, indices) * math.pi
         regression_target_translation = tf.gather_nd(regression_target_translation, indices)
@@ -222,6 +224,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         
         #also expand dims of the translation tensors to translate all points along the dimension via broadcasting
         regression_translation = tf.expand_dims(regression_translation, axis = 1)
+        regression_translation = tf.Print(regression_translation, [tf.shape(regression_translation)], message=" regression_translation.shape: ", summarize=-1)
         regression_target_translation = tf.expand_dims(regression_target_translation, axis = 1)
         
         gt_bcube_pre_Rt = tf.reshape(_flat_bcube, tf.shape(bcube_prior_points))
