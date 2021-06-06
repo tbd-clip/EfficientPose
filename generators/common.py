@@ -471,7 +471,7 @@ class Generator(keras.utils.Sequence):
         
         # get new top left point and bottom right using max and min over all 4 points
         if aug_bbox[0, 0] < aug_bbox[1, 0]:
-            top_left_x = aug_bbox[0, 0]:
+            top_left_x = aug_bbox[0, 0]
             bot_right_x = aug_bbox[1, 0]
         elif:
             top_left_x = aug_bbox[1, 0]
