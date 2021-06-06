@@ -465,24 +465,38 @@ class Generator(keras.utils.Sequence):
         is_valid = True
         # need to construct the 4 2D points of the bbox and rotate them
         lt = np.array([bbox[0], bbox[1], 1])
-        rt = np.array([bbox[0]+bbox[2], bbox[1], 1])
-        rb = np.array([tl[0]+bbox[2], tl[1]+bbox[2], 1])
-        lb = np.array([tl[0], tl[1]+bbox[2], 1])
-        bb = np.array([lt, rt, rb, lb])
-        aug_bbox = rot_mat @ bb.T
-        for i, bb_corner in enumerate(aug_bbox):
-            if bb_corner[0] < 0:
-                bb_corner[0] = 0
-            elif bb_corner[0] > w:
-                bb_corner[0] = w
-            if bb_corner[1] < 0:
-                bb_corner[1] = 0
-            elif bb_corner[1] > h:
-                bb_corner[1] = h
-            aug_bbox[i] = bb_corner
+        rb = np.array([bbox[2], bbox[3], 1])
+        bb = np.array([lt, rb])
+        aug_bbox = (rot_mat @ bb.T).T
+        
+        # get new top left point and bottom right using max and min over all 4 points
+        if aug_bbox[0, 0] < aug_bbox[1, 0]:
+            top_left_x = aug_bbox[0, 0]:
+            bot_right_x = aug_bbox[1, 0]
+        elif:
+            top_left_x = aug_bbox[1, 0]
+            bot_right_x = aug_bbox[0, 0]
+            
+        if aug_bbox[0, 1] < aug_bbox[1, 1]:
+            top_left_y = aug_bbox[0, 1]
+            bot_right_y = aug_bbox[1, 1]
+        elif:
+            top_left_y = aug_bbox[1, 1]
+            bot_right_y = aug_bbox[0, 1]
+            
+        if top_left_x < 0:
+            top_left_x = 0
+        if top_left_y < 0:
+            top_left_y = 0
+        if bot_right_x > w:
+            bot_right_x = w
+        if bot_right_y > h:
+            bot_right_y = h            
+        
+        aug_bbox = np.array([top_left_x, top_left_y, bot_right_x, bot_right_y])
 
         # if on screen bbox's area is greater than hard-coded threshold:
-        new_area = abs(aug_bbox[0, 0] - aug_bbox[1, 0]) * abs(aug_bbox[0, 1] - aug_bbox[3, 1])
+        new_area = (aug_bbox[1] - aug_bbox[3]) * (aug_bbox[0] - aug_bbox[2])
         if new_area < 400:
             is_valid = False
 
