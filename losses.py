@@ -187,7 +187,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         regression_target_translation = y_true[:, :, num_rotation_parameter:-3]
         is_symmetric = y_true[:, :, -27]
         class_indices = y_true[:, :, -26]
-        flat_bcube = tf.Tensor(y_true[:, :, -25:-1], tf.float32)
+        flat_bcube = tf.convert_to_tensor(y_true[:, :, -25:-1], tf.float32)
         anchor_state      = tf.cast(tf.math.round(y_true[:, :, -1]), tf.int32)
     
         # filter out "ignore" anchors
