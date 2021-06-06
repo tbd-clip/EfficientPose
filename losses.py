@@ -199,7 +199,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         
         regression_target_rotation = tf.gather_nd(regression_target_rotation, indices) * math.pi
         regression_target_translation = tf.gather_nd(regression_target_translation, indices)
-        _flat_cube = tf.gather_nd(flat_cube, indices)
+        _flat_bcube = tf.gather_nd(flat_bcube, indices)
         is_symmetric = tf.gather_nd(is_symmetric, indices)
         is_symmetric = tf.cast(tf.math.round(is_symmetric), tf.int32)
         class_indices = tf.gather_nd(class_indices, indices)
