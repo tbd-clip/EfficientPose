@@ -117,7 +117,8 @@ def anchor_targets_bbox(
 
     regression_batch = np.zeros((batch_size, anchors.shape[0], 4 + 1), dtype=np.float32)
     labels_batch = np.zeros((batch_size, anchors.shape[0], num_classes + 1), dtype=np.float32)
-    transformation_batch  = np.zeros((batch_size, anchors.shape[0], num_rotation_parameters + num_translation_parameters + 8 * 3 + 1), dtype = np.float32)
+    # +3 for the ground truth scaling
+    transformation_batch  = np.zeros((batch_size, anchors.shape[0], num_rotation_parameters + num_translation_parameters + 3 + 1), dtype = np.float32)
 
     # compute labels and regression targets
     for index, (image, annotations) in enumerate(zip(image_group, annotations_group)):
