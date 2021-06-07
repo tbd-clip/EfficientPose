@@ -187,7 +187,7 @@ def transformation_loss(model_3d_points_np, bcube_priors_np, num_rotation_parame
         regression_scaling = y_pred[:, :, s:e]
         regression_translation = y_pred[:, :, e:]
         regression_target_rotation = y_true[:, :, :num_rotation_parameter]
-        regression_target_translation = y_true[:, :, num_rotation_parameter:-3]
+        regression_target_translation = y_true[:, :, num_rotation_parameter:-6]
         is_symmetric = y_true[:, :, -6]
         class_indices = y_true[:, :, -5]
         gt_scaling = tf.convert_to_tensor(y_true[:, :, -4:-1], tf.float32)
